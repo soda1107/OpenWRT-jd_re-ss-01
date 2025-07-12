@@ -78,7 +78,6 @@ define Build/Prepare
 		git submodule update --init ; \
 		wget -qO - https://github.com/daeuniverse/dae/pull/763.patch | patch -p1 ; \
 		wget -qO - https://github.com/daeuniverse/dae/pull/839.patch | patch -p1 ; \
-		wget -qO - https://github.com/daeuniverse/dae/pull/849.patch | patch -p1 ; \
 		wget -qO - https://github.com/daeuniverse/dae/pull/857.patch | patch -p1 ; \
 		wget -qO - https://github.com/davidtall/dae/commit/da9a4b9.patch | patch -p1 ; \
 		go mod tidy ; \
