@@ -151,13 +151,16 @@ jobs:
             done
           fi            
 
-
+      - name: Add SmartDNS
+        run: |
+          chmod +x add_smartdns.sh
+          ./add_smartdns.sh
 
       - name: Update Feeds
         run: |
           cd ./wrt/
 
-          ./scripts/feeds update -a
+          #./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Custom Packages
