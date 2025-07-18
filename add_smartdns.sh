@@ -15,13 +15,13 @@ LUCIBRANCH="master" #更换此变量
 WORKINGDIR="`pwd`/feeds/luci/applications/luci-app-smartdns"
 mkdir $WORKINGDIR -p
 rm $WORKINGDIR/* -fr
-wget https://github.com/lwb1978/luci-app-smartdns/archive/${LUCIBRANCH}.zip -O $WORKINGDIR/${LUCIBRANCH}.zip
+wget https://github.com/pymumu/luci-app-smartdns/archive/${LUCIBRANCH}.zip -O $WORKINGDIR/${LUCIBRANCH}.zip
 unzip $WORKINGDIR/${LUCIBRANCH}.zip -d $WORKINGDIR
 mv $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}/* $WORKINGDIR/
 rmdir $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}
-sed -i '/config PACKAGE_$(PKG_NAME)_INCLUDE_smartdns_ui/{n;n;s/default n/default y/}' $WORKINGDIR/Makefile
 rm $WORKINGDIR/${LUCIBRANCH}.zip
-git clone https://github.com/pymumu/openwrt-smartdns package/smartdns
+sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' feeds/packages/net/smartdns/Makefile
+
 
 
 
