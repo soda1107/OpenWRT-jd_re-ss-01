@@ -3,14 +3,14 @@
 cd ./wrt/
 ./scripts/feeds update -a
 WORKINGDIR="`pwd`/feeds/packages/net/smartdns"
-mkdir $WORKINGDIR/plugin -p
 mkdir $WORKINGDIR -p
+mkdir $WORKINGDIR/plugin -p
 rm $WORKINGDIR/* -fr
 wget https://github.com/pymumu/openwrt-smartdns/archive/master.zip -O $WORKINGDIR/master.zip
 unzip $WORKINGDIR/master.zip -d $WORKINGDIR
 mv $WORKINGDIR/openwrt-smartdns-master/* $WORKINGDIR/
 cd $WORKINGDIR/plugin
-git clone https://github.com/pymumu/smartdns-ui.git smartdns-ui
+git clone https://github.com/pymumu/smartdns-webui.git smartdns-ui
 rmdir $WORKINGDIR/openwrt-smartdns-master
 rm $WORKINGDIR/master.zip
 
