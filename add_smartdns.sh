@@ -4,8 +4,8 @@ cd ./wrt/
 ./scripts/feeds update -a
 WORKINGDIR="`pwd`/feeds/packages/net/smartdns"
 mkdir $WORKINGDIR -p
-mkdir $WORKINGDIR/plugin -p
 rm $WORKINGDIR/* -fr
+mkdir $WORKINGDIR/plugin -p
 wget https://github.com/pymumu/openwrt-smartdns/archive/master.zip -O $WORKINGDIR/master.zip
 unzip $WORKINGDIR/master.zip -d $WORKINGDIR
 mv $WORKINGDIR/openwrt-smartdns-master/* $WORKINGDIR/
@@ -13,6 +13,7 @@ cd $WORKINGDIR/plugin
 git clone https://github.com/pymumu/smartdns-webui.git smartdns-ui
 rmdir $WORKINGDIR/openwrt-smartdns-master
 rm $WORKINGDIR/master.zip
+sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' $WORKINGDIR/Makefile
 
 LUCIBRANCH="master" #更换此变量
 WORKINGDIR="`pwd`/feeds/luci/applications/luci-app-smartdns"
@@ -23,12 +24,4 @@ unzip $WORKINGDIR/${LUCIBRANCH}.zip -d $WORKINGDIR
 mv $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}/* $WORKINGDIR/
 rmdir $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}
 rm $WORKINGDIR/${LUCIBRANCH}.zip
-sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' feeds/packages/net/smartdns/Makefile
 
-
-
-
-
-#cd ./wrt/
-#./scripts/feeds update -a
-#./scripts/feeds install -a
