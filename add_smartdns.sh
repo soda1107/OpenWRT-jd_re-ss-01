@@ -21,6 +21,7 @@ mv $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}/* $WORKINGDIR/
 rmdir $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}
 rm $WORKINGDIR/${LUCIBRANCH}.zip
 sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' feeds/packages/net/smartdns/Makefile
+sed -i '/plugin\/smartdns-ui/d' feeds/packages/net/smartdns/Makefile
 
 
 
