@@ -160,7 +160,7 @@ jobs:
         run: |
           cd ./wrt/
 
-          #./scripts/feeds update -a
+          ./scripts/feeds update -a
           ./scripts/feeds install -a
 
       - name: Custom Packages
