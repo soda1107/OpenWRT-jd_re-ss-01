@@ -25,3 +25,8 @@ mv $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}/* $WORKINGDIR/
 rmdir $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}
 rm $WORKINGDIR/${LUCIBRANCH}.zip
 
+WORKINGDIR="`pwd`/packages/new/“
+mkdir $WORKINGDIR -p
+git clone https://github.com/JohnsonRan/InfinityDuck package/new/InfinityDuck
+
+
