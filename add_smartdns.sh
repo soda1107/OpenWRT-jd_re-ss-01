@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 # Add SmartDNS to OpenWrt build environment
 cd ./wrt/
 ./scripts/feeds update -a
