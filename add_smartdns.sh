@@ -1,6 +1,6 @@
 #!/bin/bash
 # Add SmartDNS to OpenWrt build environment
-#cd ./wrt/
+cd ./wrt/
 ./scripts/feeds update -a
 WORKINGDIR="`pwd`/feeds/packages/net/smartdns"
 mkdir $WORKINGDIR -p
