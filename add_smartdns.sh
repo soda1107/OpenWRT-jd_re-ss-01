@@ -28,6 +28,6 @@ rm $WORKINGDIR/${LUCIBRANCH}.zip
 #WORKINGDIR="`pwd`/packages/new/“
 #mkdir $WORKINGDIR -p
 git clone https://$github/JohnsonRan/InfinityDuck package/new/InfinityDuck --depth=1
-echo "src/gz infsubs https://opkg.ihtw.moe/openwrt-24.10/$arch/InfinitySubstance" >>files/etc/opkg/customfeeds.conf
+#echo "src/gz infsubs https://opkg.ihtw.moe/openwrt-24.10/$arch/InfinitySubstance" >>files/etc/opkg/customfeeds.conf
 
 
