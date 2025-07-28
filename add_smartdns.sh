@@ -1,16 +1,16 @@
 #!/bin/bash
 # Add SmartDNS to OpenWrt build environment
-cd ./wrt/
-#./scripts/feeds update -a
+#cd ./wrt/
+./scripts/feeds update -a
 WORKINGDIR="`pwd`/feeds/packages/net/smartdns"
 mkdir $WORKINGDIR -p
 rm $WORKINGDIR/* -fr
-mkdir $WORKINGDIR/plugin -p
+#mkdir $WORKINGDIR/plugin -p
 wget https://github.com/pymumu/openwrt-smartdns/archive/master.zip -O $WORKINGDIR/master.zip
 unzip $WORKINGDIR/master.zip -d $WORKINGDIR
 mv $WORKINGDIR/openwrt-smartdns-master/* $WORKINGDIR/
-cd $WORKINGDIR/plugin
-git clone https://github.com/pymumu/smartdns-webui.git smartdns-ui
+#cd $WORKINGDIR/plugin
+#git clone https://github.com/pymumu/smartdns-webui.git smartdns-ui
 rmdir $WORKINGDIR/openwrt-smartdns-master
 rm $WORKINGDIR/master.zip
 sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' $WORKINGDIR/Makefile
@@ -25,9 +25,5 @@ mv $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}/* $WORKINGDIR/
 rmdir $WORKINGDIR/luci-app-smartdns-${LUCIBRANCH}
 rm $WORKINGDIR/${LUCIBRANCH}.zip
 
-#WORKINGDIR="`pwd`/packages/new/“
-#mkdir $WORKINGDIR -p
-git clone https://github.com/JohnsonRan/InfinityDuck package/new/InfinityDuck --depth=1
-#echo "src/gz infsubs https://opkg.ihtw.moe/openwrt-24.10/$arch/InfinitySubstance" >>files/etc/opkg/customfeeds.conf
 
 
