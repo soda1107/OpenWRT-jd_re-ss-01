@@ -155,8 +155,7 @@ jobs:
         run: |
           chmod +x add_smartdns.sh
           ./add_smartdns.sh
-          ./scripts/feeds install -f -p custom smartdns
-
+          
       - name: Update Feeds
         run: |
           cd ./wrt/
