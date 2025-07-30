@@ -49,7 +49,7 @@ function check_system() {
 		;;
 	"focal"|\
 	"jammy")
-		GCC_VERSION="10"
+		GCC_VERSION="12"
 		UBUNTU_CODENAME="$VERSION_CODENAME"
 		VERSION_PACKAGE="lib32gcc-s1 python2"
 		;;
