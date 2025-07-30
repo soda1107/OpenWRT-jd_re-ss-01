@@ -162,17 +162,24 @@ jobs:
 
           ./scripts/feeds update -a
           ./scripts/feeds install -a
-      
-      - name: Modify smartdns Makefile
+      - name: Fix smartdns-ui PATH and output issues
         run: |
-          SMARTDNS_MAKEFILE="package/feeds/packages/net/smartdns/Makefile"
-          if [ -f "$SMARTDNS_MAKEFILE" ]; then
-            echo "Modifying smartdns Makefile to fix PATH issue..."
-            sed -i '/PATH="$(PATH)"/d' "$SMARTDNS_MAKEFILE"
-            sed -i '/STAGING_DIR_HOST)\/bin\/cargo build --target $(RUST_TARGET)/i\            PATH="$(PATH)" \\' "$SMARTDNS_MAKEFILE"
-            echo "smartdns Makefile modified."
-          else
-            echo "smartdns Makefile not found at $SMARTDNS_MAKEFILE. Skipping modification."
+          # 修复 PATH 被当参数的问题
+          SMARTDNS_MAKEFILE=$(find wrt/feeds/packages/net/smartdns/ -name Makefile)
+          
+          echo "Patching Makefile: Prevent PATH=... from being passed to ld"
+
+          # 替换 PATH=... 写法，避免传进 make 参数里
+          sed -i '/Build\/Compile\/smartdns-ui/,/endef/ {
+            s|PATH="\$\$(PATH):\$(CARGO_HOME)/bin"|export PATH=\$\$PATH:\$(CARGO_HOME)/bin ;|
+            s|^ *make -C |$(MAKE) -C |
+          }' "$SMARTDNS_MAKEFILE"
+
+          # 同时替换掉可能输出到 smartdns-ui 目录的 -o 目标
+          SMARTDNS_UI_DIR=$(find wrt/build_dir/target-* -type d -name "smartdns-ui" | head -n1)
+          if [ -d "$SMARTDNS_UI_DIR" ]; then
+            echo "Found smartdns-ui directory: renaming to avoid ld conflict"
+            mv "$SMARTDNS_UI_DIR" "${SMARTDNS_UI_DIR}_dir"
           fi
 
       - name: Custom Packages
