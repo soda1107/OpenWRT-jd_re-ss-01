@@ -162,6 +162,18 @@ jobs:
 
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+      
+      - name: Modify smartdns Makefile
+        run: |
+          SMARTDNS_MAKEFILE="package/feeds/packages/net/smartdns/Makefile"
+          if [ -f "$SMARTDNS_MAKEFILE" ]; then
+            echo "Modifying smartdns Makefile to fix PATH issue..."
+            sed -i '/PATH="$(PATH)"/d' "$SMARTDNS_MAKEFILE"
+            sed -i '/STAGING_DIR_HOST)\/bin\/cargo build --target $(RUST_TARGET)/i\            PATH="$(PATH)" \\' "$SMARTDNS_MAKEFILE"
+            echo "smartdns Makefile modified."
+          else
+            echo "smartdns Makefile not found at $SMARTDNS_MAKEFILE. Skipping modification."
+          fi
 
       - name: Custom Packages
         run: |
