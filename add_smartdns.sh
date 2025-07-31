@@ -3,6 +3,7 @@ set -x
 # Add SmartDNS to OpenWrt build environment
 cd ./wrt/
 ./scripts/feeds update -a
+MAKEFILE_PATH="feeds/packages/net/smartdns/Makefile"
 WORKINGDIR="`pwd`/feeds/packages/net/smartdns"
 mkdir $WORKINGDIR -p
 rm $WORKINGDIR/* -fr
@@ -15,6 +16,7 @@ mv $WORKINGDIR/openwrt-smartdns-master/* $WORKINGDIR/
 rmdir $WORKINGDIR/openwrt-smartdns-master
 rm $WORKINGDIR/master.zip
 sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' $WORKINGDIR/Makefile
+sed -i '/^  DEPENDS:=+smartdns $(RUST_ARCH_DEPENDS)/ s/$/ +libc +libm/' "$MAKEFILE_PATH"
 
 LUCIBRANCH="master" #更换此变量
 WORKINGDIR="`pwd`/feeds/luci/applications/luci-app-smartdns"
