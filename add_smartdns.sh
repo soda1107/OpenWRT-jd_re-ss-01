@@ -19,8 +19,8 @@ sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feed
 # shellcheck disable=SC2016
 sed -i '/^  DEPENDS:=+smartdns $(RUST_ARCH_DEPENDS)/ s/$/ +libc +libm/' "$MAKEFILE_PATH"
 sed -i '/define Build\/Compile\/smartdns-ui/,/endef/ {
-            /^\s*RUSTFLAGS=/ s/\"$/ -C prefer-dynamic\"/
-        }' "$MAKEFILE_PATH"
+        /^\s*RUSTFLAGS=/ s/\"$/ -C prefer-dynamic -C link-arg=-lc -C link-arg=-lm\"/
+    }' "$MAKEFILE_PATH"
 
 LUCIBRANCH="master" #更换此变量
 WORKINGDIR="`pwd`/feeds/luci/applications/luci-app-smartdns"
