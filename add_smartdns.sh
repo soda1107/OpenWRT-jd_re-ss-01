@@ -20,16 +20,12 @@ if [ ! -f "$MAKEFILE_PATH" ]; then
     exit 1
 fi
 sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' $WORKINGDIR/Makefile
-sed -i '/define Package\/smartdns-ui/a\\ \ DEPENDS_IGNORE:=libc.so.6 libm.so.6' "$MAKEFILE_PATH"
-
-
-# shellcheck disable=SC2016
-sed -i '/^  DEPENDS:=+smartdns $(RUST_ARCH_DEPENDS)/ s/$/ +libc +libm/' "$MAKEFILE_PATH"
 sed -i '/define Build\/Compile\/smartdns-ui/,/endef/ {
-        /^\s*RUSTFLAGS=/ s/\"$/ -C prefer-dynamic -C link-arg=-lc -C link-arg=-lm\"/
-    }' "$MAKEFILE_PATH"
-echo "已修改 Makefile，这是 smartdns-ui 部分的新内容："
-sed -n '/define Package\/smartdns-ui/,/endef/p' "$MAKEFILE_PATH"
+    /^\s*RUSTFLAGS=/ s/\"$/ -C prefer-dynamic -C link-arg=-lc -C link-arg=-lm\"/
+}' "$MAKEFILE_PATH"
+sed -i '/^  DEPENDS:=+smartdns/ s/$/ +libc:0 +libm:0/' "$MAKEFILE_PATH"
+echo "已修改 Makefile，以下是 smartdns 相关部分的新内容："
+sed -n '/define Package\/smartdns/,/endef/p' "$MAKEFILE_PATH"
 
 
 LUCIBRANCH="master" #更换此变量
