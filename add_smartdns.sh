@@ -16,6 +16,8 @@ mv $WORKINGDIR/openwrt-smartdns-master/* $WORKINGDIR/
 rmdir $WORKINGDIR/openwrt-smartdns-master
 rm $WORKINGDIR/master.zip
 sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' $WORKINGDIR/Makefile
+sed -i '/^\s*DEPENDS:=.*smartdns/a\ \ DEPENDS_IGNORE:=libc.so.6 libm.so.6' "$MAKEFILE_PATH"
+
 # shellcheck disable=SC2016
 sed -i '/^  DEPENDS:=+smartdns $(RUST_ARCH_DEPENDS)/ s/$/ +libc +libm/' "$MAKEFILE_PATH"
 sed -i '/define Build\/Compile\/smartdns-ui/,/endef/ {
