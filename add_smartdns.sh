@@ -28,6 +28,9 @@ sed -i '/^  DEPENDS:=+smartdns $(RUST_ARCH_DEPENDS)/ s/$/ +libc +libm/' "$MAKEFI
 sed -i '/define Build\/Compile\/smartdns-ui/,/endef/ {
         /^\s*RUSTFLAGS=/ s/\"$/ -C prefer-dynamic -C link-arg=-lc -C link-arg=-lm\"/
     }' "$MAKEFILE_PATH"
+echo "已修改 Makefile，这是 smartdns-ui 部分的新内容："
+sed -n '/define Package\/smartdns-ui/,/endef/p' "$MAKEFILE_PATH"
+
 
 LUCIBRANCH="master" #更换此变量
 WORKINGDIR="`pwd`/feeds/luci/applications/luci-app-smartdns"
