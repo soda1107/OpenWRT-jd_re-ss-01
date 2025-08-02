@@ -15,8 +15,13 @@ mv $WORKINGDIR/openwrt-smartdns-master/* $WORKINGDIR/
 #git clone https://github.com/pymumu/smartdns-webui.git smartdns-ui
 rmdir $WORKINGDIR/openwrt-smartdns-master
 rm $WORKINGDIR/master.zip
+if [ ! -f "$MAKEFILE_PATH" ]; then
+    echo "错误：Makefile文件未找到，请检查路径是否正确。"
+    exit 1
+fi
 sed -i 's#^\s*include \.\./\.\./lang/rust/rust-package.mk#include $(TOPDIR)/feeds/packages/lang/rust/rust-package.mk#' $WORKINGDIR/Makefile
-sed -i '/^\s*DEPENDS:=.*smartdns/a\ \ DEPENDS_IGNORE:=libc.so.6 libm.so.6' "$MAKEFILE_PATH"
+sed -i '/define Package\/smartdns-ui/a\\ \ DEPENDS_IGNORE:=libc.so.6 libm.so.6' "$MAKEFILE_PATH"
+
 
 # shellcheck disable=SC2016
 sed -i '/^  DEPENDS:=+smartdns $(RUST_ARCH_DEPENDS)/ s/$/ +libc +libm/' "$MAKEFILE_PATH"
