@@ -187,12 +187,7 @@ jobs:
             echo "Found smartdns-ui directory: renaming to avoid ld conflict"
             mv "$SMARTDNS_UI_DIR" "${SMARTDNS_UI_DIR}_dir"
           fi
-      - name: Patch Cargo.toml for Rust .so
-        run: |
-          CARGO_TOML=$(find wrt/build_dir/target-*/smartdns-*/plugin/smartdns-ui -name Cargo.toml | head -n1)
-          echo "Patching $CARGO_TOML"
-          sed -i '/^\[package\]/a\
-          defaults\nname = "smartdns_ui"\ncrate-type = ["cdylib"]\n' "$CARGO_TOML"
+      
       
       - name: Prepare smartdns source
         run: |
@@ -223,9 +218,6 @@ jobs:
 
           sed -i 's|plugin/smartdns-ui/target/smartdns_ui.so|plugin/smartdns-ui/target/aarch64-unknown-linux-musl/release/libsmartdns_ui.so|g' "$MAKEFILE"
 
-      - name: Verify built .so file
-        run: |
-          file wrt/build_dir/target-*/smartdns-*/plugin/smartdns-ui/target/aarch64-unknown-linux-musl/release/libsmartdns_ui.so
 
       - name: Custom Packages
         run: |
