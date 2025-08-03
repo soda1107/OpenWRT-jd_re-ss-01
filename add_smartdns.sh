@@ -2,7 +2,7 @@
 set -x
 # Add SmartDNS to OpenWrt build environment
 cd ./wrt/
-./scripts/feeds update -a
+#./scripts/feeds update -a
 MAKEFILE_PATH="feeds/packages/net/smartdns/Makefile"
 WORKINGDIR="`pwd`/feeds/packages/net/smartdns"
 MAKEFILE=$(find wrt/feeds/packages/net/smartdns/ -name Makefile | head -n1)

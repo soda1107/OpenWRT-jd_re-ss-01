@@ -193,6 +193,11 @@ jobs:
           echo "Patching $CARGO_TOML"
           sed -i '/^\[package\]/a\
           defaults\nname = "smartdns_ui"\ncrate-type = ["cdylib"]\n' "$CARGO_TOML"
+      
+      - name: Prepare smartdns source
+        run: |
+          cd wrt
+          make package/smartdns/prepare V=s
 
       - name: Patch smartdns Makefile for musl Rust build
         run: |
