@@ -189,10 +189,6 @@ jobs:
           fi
       
       
-      - name: Prepare smartdns source
-        run: |
-          cd wrt
-          make package/smartdns/prepare V=s
 
       - name: Patch smartdns Makefile for musl Rust build
         run: |
