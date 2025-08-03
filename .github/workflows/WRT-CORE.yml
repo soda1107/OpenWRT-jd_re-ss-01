@@ -187,7 +187,41 @@ jobs:
             echo "Found smartdns-ui directory: renaming to avoid ld conflict"
             mv "$SMARTDNS_UI_DIR" "${SMARTDNS_UI_DIR}_dir"
           fi
-      
+      - name: Patch Cargo.toml for Rust .so
+        run: |
+          CARGO_TOML=$(find wrt/build_dir/target-*/smartdns-*/plugin/smartdns-ui -name Cargo.toml | head -n1)
+          echo "Patching $CARGO_TOML"
+          sed -i '/^\[package\]/a\
+          defaults\nname = "smartdns_ui"\ncrate-type = ["cdylib"]\n' "$CARGO_TOML"
+
+      - name: Patch smartdns Makefile for musl Rust build
+        run: |
+          MAKEFILE=$(find wrt/feeds/packages/net/smartdns/ -name Makefile | head -n1)
+    
+          echo "Patching smartdns-ui build to use musl toolchain"
+    
+          sed -i '/Build\/Compile\/smartdns-ui/,/endef/ {
+          s|make -C .*||g
+          a \
+          export PATH=\$\$PATH:\$(CARGO_HOME)/bin ; \\
+          export CC=\$(TARGET_CC) ; \\
+          export CXX=\$(TARGET_CXX) ; \\
+          export AR=\$(TARGET_AR) ; \\
+          export RUSTFLAGS="-C linker=\$(TARGET_CC)" ; \\
+          cargo build --release --target aarch64-unknown-linux-musl \\
+          --manifest-path=\$(PKG_BUILD_DIR)/plugin/smartdns-ui/Cargo.toml
+          }' "$MAKEFILE"
+
+      - name: Fix install path for smartdns-ui .so
+        run: |
+          MAKEFILE=$(find wrt/feeds/packages/net/smartdns/ -name Makefile | head -n1)
+
+          sed -i 's|plugin/smartdns-ui/target/smartdns_ui.so|plugin/smartdns-ui/target/aarch64-unknown-linux-musl/release/libsmartdns_ui.so|g' "$MAKEFILE"
+
+      - name: Verify built .so file
+        run: |
+          file wrt/build_dir/target-*/smartdns-*/plugin/smartdns-ui/target/aarch64-unknown-linux-musl/release/libsmartdns_ui.so
+
       - name: Custom Packages
         run: |
           cd ./wrt/package/
