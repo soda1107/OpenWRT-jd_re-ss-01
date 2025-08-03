@@ -190,23 +190,26 @@ jobs:
       
       
 
-      - name: Patch smartdns Makefile for musl Rust build
+      - name: Patch smartdns Makefile to use musl Rust build
         run: |
           MAKEFILE=$(find wrt/feeds/packages/net/smartdns/ -name Makefile | head -n1)
-    
+
           echo "Patching smartdns-ui build to use musl toolchain"
-    
-          sed -i '/Build\/Compile\/smartdns-ui/,/endef/ {
-          s|make -C .*||g
-          a \
-          export PATH=\$\$PATH:\$(CARGO_HOME)/bin ; \\
-          export CC=\$(TARGET_CC) ; \\
-          export CXX=\$(TARGET_CXX) ; \\
-          export AR=\$(TARGET_AR) ; \\
-          export RUSTFLAGS="-C linker=\$(TARGET_CC)" ; \\
-          cargo build --release --target aarch64-unknown-linux-musl \\
-          --manifest-path=\$(PKG_BUILD_DIR)/plugin/smartdns-ui/Cargo.toml
-          }' "$MAKEFILE"
+
+          awk '
+          /define Build\/Compile\/smartdns-ui/ {print; in_block=1; next}
+          /endef/ && in_block {
+            print "	export PATH=$$PATH:$(CARGO_HOME)/bin ; \\"
+            print "	export CC=$(TARGET_CC) ; \\"
+            print "	export CXX=$(TARGET_CXX) ; \\"
+            print "	export AR=$(TARGET_AR) ; \\"
+            print "	export RUSTFLAGS=\"-C linker=$(TARGET_CC)\" ; \\"
+            print "	cargo build --release --target aarch64-unknown-linux-musl \\"
+            print "	  --manifest-path=$(PKG_BUILD_DIR)/plugin/smartdns-ui/Cargo.toml"
+            in_block=0
+          }
+          {if (!in_block || /endef/ == 0) print}
+          ' "$MAKEFILE" > "$MAKEFILE.patched" && mv "$MAKEFILE.patched" "$MAKEFILE"
 
       - name: Fix install path for smartdns-ui .so
         run: |
