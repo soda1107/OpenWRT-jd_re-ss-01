@@ -153,8 +153,8 @@ jobs:
 
       - name: Add SmartDNS
         run: |
-          chmod +x add_smartdns.sh
-          ./add_smartdns.sh
+          chmod +x addsmartdns.sh
+          ./addsmartdns.sh
 
       - name: Update Feeds
         run: |
