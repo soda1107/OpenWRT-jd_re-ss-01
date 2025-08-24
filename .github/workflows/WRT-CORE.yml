@@ -151,7 +151,10 @@ jobs:
             done
           fi            
 
-
+      - name: Add SmartDNS
+        run: |
+          chmod +x add_smartdns.sh
+          ./add_smartdns.sh
 
       - name: Update Feeds
         run: |
@@ -266,3 +269,4 @@ jobs:
 
             内核版本：${{env.WRT_KVER}}
             插件列表：${{env.WRT_LIST}}
+
