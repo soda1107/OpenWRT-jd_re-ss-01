@@ -75,23 +75,11 @@ define Package/dae/conffiles
 /etc/config/dae
 endef
 
-#define Build/Prepare
-#	( \
-#		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout main ; \
-#		pushd $(PKG_BUILD_DIR) ; \
-#		git submodule update --init ; \
-#		go mod tidy ; \
-#		popd ; \
-#	)
-#endef
-
 define Build/Prepare
-    ( \
-        $(TAR) --strip-components=1 -C $(PKG_BUILD_DIR)/../ -xzf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.gz ; \
-        rm -rf $(PKG_BUILD_DIR) && git clone https://github.com/daeuniverse/dae-wing $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing && git -C $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing checkout $(WING_HASH_SHORT) ; \
-        rm -rf $(PKG_BUILD_DIR)/dae-core && git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core && git -C $(PKG_BUILD_DIR)/dae-core checkout $(CORE_HASH_SHORT) ; \
-        pushd $(PKG_BUILD_DIR)/dae-core ; \
-        git submodule update --init ; \
+	( \
+		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout main ; \
+		pushd $(PKG_BUILD_DIR) ; \
+		git submodule update --init ; \
         wget -qO - https://github.com/daeuniverse/dae/pull/763.patch | patch -p1 ; \
         wget -qO - https://github.com/daeuniverse/dae/pull/839.patch | patch -p1 ; \
         wget -qO - https://github.com/daeuniverse/dae/commit/56fb759.patch | patch -p1 ; \
@@ -103,10 +91,11 @@ define Build/Prepare
         sed -i 's/Warn("failed to write cached DNS resp")/Debug("failed to write cached DNS resp")/g' control/dns_control.go ; \
         sed -i 's/Warn("failed to send DNS response")/Debug("failed to send DNS response")/g' control/dns_control.go ; \
         sed -i 's/Warn("failed to send DNS reject response")/Debug("failed to send DNS reject response")/g' control/dns_control.go ; \
-        go mod tidy ; \
-        popd ; \
-    )
+		go mod tidy ; \
+		popd ; \
+	)
 endef
+
 
 DAE_CFLAGS:= \
 	-O2 -Wall -Werror \
