@@ -75,13 +75,55 @@ define Package/dae/conffiles
 /etc/config/dae
 endef
 
+#define Build/Prepare
+#	( \
+#		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout main ; \
+#		pushd $(PKG_BUILD_DIR) ; \
+#		git submodule update --init ; \
+#		go mod tidy ; \
+#		popd ; \
+#	)
+#endef
+
 define Build/Prepare
 	( \
-		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout main ; \
-		pushd $(PKG_BUILD_DIR) ; \
+		$(TAR) --strip-components=1 -C $(PKG_BUILD_DIR)/../ -xzf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.gz ; \
+		#rm -rf $(PKG_BUILD_DIR) && git clone https://github.com/daeuniverse/dae-wing $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing && git -C $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing checkout $(WING_HASH_SHORT) ; \
+		rm -rf $(PKG_BUILD_DIR)/dae-core && git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core && git -C $(PKG_BUILD_DIR)/dae-core checkout $(CORE_HASH_SHORT) ; \
+		pushd $(PKG_BUILD_DIR)/dae-core ; \
 		git submodule update --init ; \
+		wget -qO - https://github.com/daeuniverse/dae/pull/763.patch | patch -p1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/pull/839.patch | patch -p1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/56fb759.patch | patch -p1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/af2e2c6.patch | patch -p1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/d96dc26.patch | patch -p1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/6ff101c.patch | patch -p1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/5740b94.patch | patch -p1 ; \
+		wget -qO - https://github.com/daeuniverse/dae/commit/cec1642.patch | patch -p1 ; \
+		sed -i 's/Warn("failed to write cached DNS resp")/Debug("failed to write cached DNS resp")/g' control/dns_control.go ; \
+		sed -i 's/Warn("failed to send DNS response")/Debug("failed to send DNS response")/g' control/dns_control.go ; \
+		sed -i 's/Warn("failed to send DNS reject response")/Debug("failed to send DNS reject response")/g' control/dns_control.go ; \
 		go mod tidy ; \
 		popd ; \
+		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/wing ; \
+		wget -qO - https://github.com/daeuniverse/dae-wing/commit/ca02961.patch | patch -p1 ; \
+		go mod tidy ; \
+		popd ; \
+		pushd $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION) ; \
+		npm install -g pnpm ; \
+		pnpm install ; \
+		pnpm build ; \
+		popd ; \
+		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
+		cp -rf $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)/dist/* $(PKG_BUILD_DIR)/webrender/web ; \
+		find $(PKG_BUILD_DIR)/webrender/web -type f -size +4k ! -name "*.gz" ! -name "*.woff"  ! -name "*.woff2" -exec sh -c '\
+			gzip -9 -k "{}"; \
+			if [ "$$$$(stat -c %s {})" -lt "$$$$(stat -c %s {}.gz)" ]; then \
+				rm {}.gz; \
+			else \
+				rm {}; \
+			fi' \
+		";" ; \
 	)
 endef
 
