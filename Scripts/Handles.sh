@@ -24,6 +24,17 @@ if [ -d *"homeproxy"* ]; then
 	cd $PKG_PATH && echo "homeproxy date has been updated!"
 fi
 
+#修改argon主题字体和颜色
+if [ -d *"luci-theme-argon"* ]; then
+	echo " "
+
+	cd ./luci-theme-argon/
+
+	sed -i "s/primary '.*'/primary '#31a1a1'/; s/'0.2'/'0.5'/; s/'none'/'bing'/; s/'600'/'normal'/" ./luci-app-argon-config/root/etc/config/argon
+
+	cd $PKG_PATH && echo "theme-argon has been fixed!"
+fi
+
 #修改qca-nss-drv启动顺序
 NSS_DRV="../feeds/nss_packages/qca-nss-drv/files/qca-nss-drv.init"
 if [ -f "$NSS_DRV" ]; then
@@ -52,5 +63,15 @@ if [ -f "$TS_FILE" ]; then
 	sed -i '/\/files/d' $TS_FILE
 
 	cd $PKG_PATH && echo "tailscale has been fixed!"
+fi
+#修复99_netspeedtest文件残留问题
+if [ -d *"luci-app-netspeedtest"* ]; then
+	echo " "
+
+	cd ./luci-app-netspeedtest/
+
+	sed -i '$a\exit 0' ./netspeedtest/files/99_netspeedtest.defaults
+
+	cd $PKG_PATH && echo "netspeedtest has been fixed!"
 fi
 
