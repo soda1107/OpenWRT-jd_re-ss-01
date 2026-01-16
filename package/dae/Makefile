@@ -9,7 +9,7 @@ PKG_VERSION:=$(shell date "+%Y.%m.%d")
 PKG_RELEASE:=1
 
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
-PKG_SOURCE_URL:=https://github.com/daeuniverse/dae.git
+PKG_SOURCE_URL:=https://github.com/QiuSimons/dae.git.git
 #PKG_SOURCE_URL:=https://github.com/LostAttractor/dae.git
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(shell git ls-remote $(PKG_SOURCE_URL) HEAD | cut -c1-7)
@@ -44,7 +44,7 @@ define Package/dae/Default
   SECTION:=net
   CATEGORY:=Network
   SUBMENU:=Web Servers/Proxies
-  URL:=https://github.com/daeuniverse/dae
+  URL:=https://github.com/QiuSimons/dae.git
 endef
 
 define Package/dae
@@ -80,14 +80,14 @@ define Build/Prepare
 		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout main ; \
 		pushd $(PKG_BUILD_DIR) ; \
 		git submodule update --init ; \
-        wget -qO - https://github.com/daeuniverse/dae/pull/763.patch | patch -p1 ; \
-        wget -qO - https://github.com/daeuniverse/dae/pull/839.patch | patch -p1 ; \
-        wget -qO - https://github.com/daeuniverse/dae/commit/56fb759.patch | patch -p1 ; \
-        wget -qO - https://github.com/daeuniverse/dae/commit/af2e2c6.patch | patch -p1 ; \
-        wget -qO - https://github.com/daeuniverse/dae/commit/d96dc26.patch | patch -p1 ; \
-        wget -qO - https://github.com/daeuniverse/dae/commit/6ff101c.patch | patch -p1 ; \
-        wget -qO - https://github.com/daeuniverse/dae/commit/5740b94.patch | patch -p1 ; \
-        wget -qO - https://github.com/daeuniverse/dae/commit/cec1642.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/pull/763.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/pull/839.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/commit/56fb759.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/commit/af2e2c6.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/commit/d96dc26.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/commit/6ff101c.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/commit/5740b94.patch | patch -p1 ; \
+        wget -qO - https://github.com/QiuSimons/dae.git/commit/cec1642.patch | patch -p1 ; \
         sed -i 's/Warn("failed to write cached DNS resp")/Debug("failed to write cached DNS resp")/g' control/dns_control.go ; \
         sed -i 's/Warn("failed to send DNS response")/Debug("failed to send DNS response")/g' control/dns_control.go ; \
         sed -i 's/Warn("failed to send DNS reject response")/Debug("failed to send DNS reject response")/g' control/dns_control.go ; \
