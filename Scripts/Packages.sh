@@ -126,7 +126,7 @@ sed -i 's/+xray-core//' luci-app-passwall2/Makefile
 
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
-rm -rf ../feeds/packages/net/{v2ray-geodata}
+#rm -rf ../feeds/packages/net/{v2ray-geodata}
 
 #更新golang为最新版
 rm -rf ../feeds/packages/lang/golang
