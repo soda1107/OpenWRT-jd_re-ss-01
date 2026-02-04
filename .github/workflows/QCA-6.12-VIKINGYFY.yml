@@ -33,7 +33,7 @@ jobs:
       #max-parallel: 3
       matrix:
 #        CONFIG: [IPQ60XX-NOWIFI]
-        CONFIG: [IPQ60XX-NOWIFI, IPQ60XX-WIFI]
+        CONFIG: [IPQ60XX-NOWIFI]
         SOURCE: [VIKINGYFY/immortalwrt]
 #        SOURCE: [davidtall/VIKINGYFY-immort]
         BRANCH: [main]
