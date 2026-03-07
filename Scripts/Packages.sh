@@ -64,9 +64,9 @@ UPDATE_PACKAGE "ddns-go" "sirpdboy/luci-app-ddns-go" "main"
 UPDATE_PACKAGE "diskman" "lisaac/luci-app-diskman" "master"
 UPDATE_PACKAGE "easytier" "EasyTier/luci-app-easytier" "main"
 UPDATE_PACKAGE "fancontrol" "rockjake/luci-app-fancontrol" "main"
-UPDATE_PACKAGE "gecoosac" "lwb1978/openwrt-gecoosac" "main"
+UPDATE_PACKAGE "gecoosac" "openwrt-fork/openwrt-gecoosac" "main"
 UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5" "" "v2dat"
-UPDATE_PACKAGE "netspeedtest" "sirpdboy/luci-app-netspeedtest" "master" "" "homebox speedtest"
+#UPDATE_PACKAGE "netspeedtest" "sirpdboy/luci-app-netspeedtest" "master" "" "homebox speedtest"
 UPDATE_PACKAGE "openlist2" "sbwml/luci-app-openlist2" "main"
 UPDATE_PACKAGE "partexp" "sirpdboy/luci-app-partexp" "main"
 UPDATE_PACKAGE "qbittorrent" "sbwml/luci-app-qbittorrent" "master" "" "qt6base qt6tools rblibtorrent"
@@ -133,3 +133,7 @@ cp -r $GITHUB_WORKSPACE/package/* ./
 #修复daed/Makefile
 rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
 cat luci-app-daed/daed/Makefile
+#修复libubox报错
+#sed -i '/include $(INCLUDE_DIR)\/cmake.mk/a PKG_BUILD_FLAGS:=no-werror' ../package/libs/libubox/Makefile
+#sed -i 's|TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include|& -Wno-error=format-nonliteral -Wno-format-nonliteral|' ../package/libs/libubox/Makefile
+#cat ../package/libs/libubox/Makefile
