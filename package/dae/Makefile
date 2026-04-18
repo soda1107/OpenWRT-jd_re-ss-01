@@ -11,7 +11,7 @@ PKG_RELEASE:=1
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://github.com/daeuniverse/dae.git
 #PKG_SOURCE_URL:=https://github.com/LostAttractor/dae.git
-OUTBOUND_URL:=https://github.com/LostAttractor/outbound.git
+OUTBOUND_URL:=https://github.com/daeuniverse/outbound.git
 GIT_BRANCH:=main
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(shell git ls-remote $(PKG_SOURCE_URL) $(GIT_BRANCH) | cut -c1-7)
@@ -82,6 +82,7 @@ define Build/Prepare
 		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout $(GIT_BRANCH) ; \
 		pushd $(PKG_BUILD_DIR) ; \
 		git submodule update --init ; \
+        go get github.com/daeuniverse/outbound@7c7e2f7 ; \
 		go mod tidy ; \
 		popd ; \
 	)
