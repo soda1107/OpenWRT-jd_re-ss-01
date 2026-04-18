@@ -39,7 +39,7 @@ include $(INCLUDE_DIR)/package.mk
 include $(INCLUDE_DIR)/bpf.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
 
-GO_PKG_DEFAULT_LDFLAGS:=-w -s -extldflags "-static"
+GO_PKG_DEFAULT_LDFLAGS:=-w -s 
 TAR_CMD=$(HOST_TAR) -C $(BUILD_DIR)/ $(TAR_OPTIONS)
 
 define Package/dae/Default
@@ -82,7 +82,7 @@ define Build/Prepare
 		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout $(GIT_BRANCH) ; \
 		pushd $(PKG_BUILD_DIR) ; \
 		git submodule update --init ; \
-        go get github.com/daeuniverse/outbound@7c7e2f7 ; \
+        go mod edit -require=github.com/daeuniverse/outbound@7c7e2f7 ; \
 		go mod tidy ; \
 		popd ; \
 	)
