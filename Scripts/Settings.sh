@@ -56,11 +56,6 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 	#开启sqm-nss插件
 	echo "CONFIG_PACKAGE_luci-app-sqm=y" >> ./.config
 	echo "CONFIG_PACKAGE_sqm-scripts-nss=y" >> ./.config
-	# 禁用 IPv6 offload 模块
-    echo "# CONFIG_PACKAGE_kmod-qca-nss-ecm-ipv6 is not set" >>  ./.config
-    echo "# CONFIG_PACKAGE_kmod-qca-nss-tunipip6 is not set" >>  ./.config
-    echo "# CONFIG_PACKAGE_kmod-qca-nss-tun6rd is not set" >>  ./.config
-    echo "# CONFIG_PACKAGE_kmod-qca-nss-map-t is not set" >>  ./.config
 
 	#设置NSS版本
 	echo "CONFIG_NSS_FIRMWARE_VERSION_11_4=n" >> ./.config
