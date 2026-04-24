@@ -14,9 +14,10 @@ PKG_SOURCE_URL:=https://github.com/daeuniverse/dae.git
 #PKG_SOURCE_URL:=https://github.com/ppdragon16/dae.git
 #OUTBOUND_URL:=https://github.com/LostAttractor/outbound.git
 OUTBOUND_URL:=https://github.com/ppdragon16/outbound.git
-GIT_BRANCH:=main
+DAE_BRANCH:=main
+OUTBOUND_BRANCH:=next
 PKG_SOURCE_PROTO:=git
-PKG_SOURCE_VERSION:=$(shell git ls-remote $(PKG_SOURCE_URL) $(GIT_BRANCH) | cut -c1-7)
+PKG_SOURCE_VERSION:=$(shell git ls-remote $(PKG_SOURCE_URL) $(DAE_BRANCH) | cut -c1-7)
 PKG_MIRROR_HASH:=
 
 PKG_LICENSE:=AGPL-3.0-only
@@ -88,10 +89,19 @@ endef
 
 define Build/Prepare
 	( \
-		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout $(GIT_BRANCH) ; \
+		rm -rf $(PKG_BUILD_DIR) ; \
+		git clone -b $(DAE_BRANCH) $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) ; \
+		\
 		pushd $(PKG_BUILD_DIR) ; \
-		git submodule update --init ; \
+		\
+		rm -rf pp_outbound ; \
+		git clone -b $(OUTBOUND_BRANCH) $(OUTBOUND_URL) pp_outbound ; \
+		\
+		go mod edit -replace github.com/daeuniverse/outbound=./pp_outbound ; \
+		\
+		git submodule update --init --recursive ; \
 		go mod tidy ; \
+		\
 		popd ; \
 	)
 endef
