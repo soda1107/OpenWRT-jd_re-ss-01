@@ -10,7 +10,6 @@ define Package/momo-rules
   SECTION:=utils
   CATEGORY:=Utilities
   TITLE:=Momo sing-box rules updater
-  DEPENDS:=
 endef
 
 define Package/momo-rules/install

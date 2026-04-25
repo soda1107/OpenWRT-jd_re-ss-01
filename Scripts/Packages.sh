@@ -28,27 +28,6 @@ UPDATE_PACKAGE() {
 		fi
 	done
 
-	# 克隆 GitHub 仓库
-	git clone --depth=1 --single-branch --branch $PKG_BRANCH "https://github.com/$PKG_REPO.git"
-	# 如果是 luci-app-daed，则自动合并 outbound PR #63
-	if [[ "$PKG_NAME" == "luci-app-daed" ]]; then
-    echo "Merging outbound PR #63 into luci-app-daed ..."
-
-    	if [ -d "$REPO_NAME/daed" ]; then
-        	cd "$REPO_NAME/daed"
-
-       	 	# clone outbound
-        	git clone https://github.com/daeuniverse/outbound.git outbound
-        	git -C outbound fetch origin pull/63/head:pr-63
-        	git -C outbound checkout pr-63
-
-        	# go mod replace
-        	go mod edit -replace=github.com/daeuniverse/outbound=./outbound
-        	go mod tidy
-
-        	cd - >/dev/null
-    	fi
-	fi
 
 
 	# 处理克隆的仓库
@@ -149,7 +128,34 @@ UPDATE_VERSION() {
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/v2ray-geodata
+
+# 在仓库根创建 patches 文件（如果不存在）
+if [ -d "$GITHUB_WORKSPACE/package/dae" ]; then
+    echo "Removing local package/dae to avoid overriding feeds/packages/net/dae"
+    rm -rf "$GITHUB_WORKSPACE/package/dae"
+fi
 cp -r $GITHUB_WORKSPACE/package/* ./
+mkdir -p $GITHUB_WORKSPACE/patches/feeds/packages/net/dae
+cat > $GITHUB_WORKSPACE/patches/feeds/packages/net/dae/999-merge-outbound-pr63.patch <<'PATCH'
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ define Build/Prepare
+-   $(call Build/Prepare/Default)
++   $(call Build/Prepare/Default)
++
++   # --- merge outbound PR63 ---
++   $(info Merging outbound PR#63 into dae build)
++   git clone https://github.com/daeuniverse/outbound.git $(PKG_BUILD_DIR)/outbound
++   git -C $(PKG_BUILD_DIR)/outbound fetch origin pull/63/head:pr-63
++   git -C $(PKG_BUILD_DIR)/outbound checkout pr-63
++   cd $(PKG_BUILD_DIR) && go mod edit -replace=github.com/daeuniverse/outbound=./outbound
++   cd $(PKG_BUILD_DIR) && go mod tidy
+ endef
+PATCH
+
+echo "Created patch: patches/feeds/packages/net/dae/999-merge-outbound-pr63.patch"
+
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
 #cat luci-app-daed/daed/Makefile
