@@ -27,6 +27,7 @@ UPDATE_PACKAGE() {
 			echo "Not fonud directory: $NAME"
 		fi
 	done
+    git clone --depth=1 --single-branch --branch "$PKG_BRANCH" "https://github.com/$PKG_REPO.git"
 
 
 
