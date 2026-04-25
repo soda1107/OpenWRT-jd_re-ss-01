@@ -30,6 +30,26 @@ UPDATE_PACKAGE() {
 
 	# 克隆 GitHub 仓库
 	git clone --depth=1 --single-branch --branch $PKG_BRANCH "https://github.com/$PKG_REPO.git"
+	# 如果是 luci-app-daed，则自动合并 outbound PR #63
+	if [[ "$PKG_NAME" == "luci-app-daed" ]]; then
+    echo "Merging outbound PR #63 into luci-app-daed ..."
+
+    	if [ -d "$REPO_NAME/daed" ]; then
+        	cd "$REPO_NAME/daed"
+
+       	 	# clone outbound
+        	git clone https://github.com/daeuniverse/outbound.git outbound
+        	git -C outbound fetch origin pull/63/head:pr-63
+        	git -C outbound checkout pr-63
+
+        	# go mod replace
+        	go mod edit -replace=github.com/daeuniverse/outbound=./outbound
+        	go mod tidy
+
+        	cd - >/dev/null
+    	fi
+	fi
+
 
 	# 处理克隆的仓库
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
