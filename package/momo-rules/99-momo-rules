@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# 首次启动触发一次更新（输出到 /tmp 以便调试）
+[ -x /usr/bin/update-momo-rules.sh ] && /usr/bin/update-momo-rules.sh >/tmp/momo-rules-first-run.log 2>&1 || true
+
+# 设置定时任务：每周三 03:00 执行
+CRON_ENTRY="0 3 * * 3 /usr/bin/update-momo-rules.sh >/dev/null 2>&1"
+grep -F "$CRON_ENTRY" /etc/crontabs/root >/dev/null 2>&1 || {
+    echo "$CRON_ENTRY" >> /etc/crontabs/root
+    /etc/init.d/cron restart >/dev/null 2>&1 || true
+}
+
+# 启用 init 脚本（开机自启）
+[ -x /etc/init.d/momo-rules ] && /etc/init.d/momo-rules enable >/dev/null 2>&1 || true
+
+# uci-defaults 机制通常会自动删除此文件，保守删除一次
+[ -f /etc/uci-defaults/99-momo-rules ] && rm -f /etc/uci-defaults/99-momo-rules || true

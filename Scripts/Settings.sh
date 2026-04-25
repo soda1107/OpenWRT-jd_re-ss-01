@@ -71,3 +71,14 @@ if [[ "${WRT_TARGET^^}" == *"QUALCOMMAX"* ]]; then
 	#其他调整
 	echo "CONFIG_PACKAGE_kmod-usb-serial-qualcomm=y" >> ./.config
 fi
+# ============= momo 规则更新脚本权限设置 =============
+
+# 确保文件存在并设置权限
+chmod +x "$GITHUB_WORKSPACE/files/etc/init.d/momo-rules-update" 2>/dev/null || true
+chmod +x "$GITHUB_WORKSPACE/files/etc/uci-defaults/99-momo-rules-init" 2>/dev/null || true
+chmod +x "$GITHUB_WORKSPACE/files/usr/share/momo/update-rules.sh" 2>/dev/null || true
+
+# 如果使用 cron.d 方式，也设置权限
+chmod 0755 "$GITHUB_WORKSPACE/files/etc/cron.d/momo-rules-update" 2>/dev/null || true
+
+echo "momo 规则更新脚本已准备完毕"
