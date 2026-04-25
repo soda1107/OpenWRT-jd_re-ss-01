@@ -15,7 +15,6 @@ PKG_SOURCE_URL:=https://github.com/daeuniverse/dae.git
 #OUTBOUND_URL:=https://github.com/LostAttractor/outbound.git
 OUTBOUND_URL:=https://github.com/ppdragon16/outbound.git
 GIT_BRANCH:=main
-OUTBOUND_GIT_BRANCH:=next
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_VERSION:=$(shell git ls-remote $(PKG_SOURCE_URL) $(GIT_BRANCH) | cut -c1-7)
 PKG_MIRROR_HASH:=
@@ -88,21 +87,16 @@ define Package/dae/conffiles
 endef
 
 define Build/Prepare
-    ( \
-        rm -rf $(PKG_BUILD_DIR) ; \
-        # clone dae (main)
-        git clone --depth 1 --branch $(GIT_BRANCH) $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) ; \
-        # clone outbound into source tree (next)
-        git clone --depth 1 --branch $(OUTBOUND_GIT_BRANCH) $(OUTBOUND_URL) $(PKG_BUILD_DIR)/outbound ; \
-        # ensure submodules are initialized recursively (ignore errors)
-        git -C $(PKG_BUILD_DIR) submodule update --init --recursive || true ; \
-        git -C $(PKG_BUILD_DIR)/outbound submodule update --init --recursive || true ; \
-        cd $(PKG_BUILD_DIR) && go mod tidy ; \
-    )
+	( \
+		rm -rf $(PKG_BUILD_DIR) && git clone $(PKG_SOURCE_URL) $(PKG_BUILD_DIR) && git -C $(PKG_BUILD_DIR) checkout $(GIT_BRANCH) ; \
+		git -C $(PKG_BUILD_DIR) submodule update --init ; \
+        git clone https://github.com/daeuniverse/outbound.git $(PKG_BUILD_DIR)/outbound ; \
+        git -C $(PKG_BUILD_DIR)/outbound fetch origin pull/63/head:pr-63 ; \
+        git -C $(PKG_BUILD_DIR)/outbound checkout pr-63 ; \
+        cd $(PKG_BUILD_DIR) && go mod edit -replace=github.com/daeuniverse/outbound=./outbound ; \
+ 	    cd $(PKG_BUILD_DIR) && go mod tidy ; \
+	)
 endef
-
-
-
 
 DAE_CFLAGS:= \
 	-O2 -Wall -Werror \
