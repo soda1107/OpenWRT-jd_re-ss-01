@@ -99,9 +99,12 @@ define Build/Prepare
 		\
 		go mod edit -replace github.com/daeuniverse/outbound=./pp_outbound ; \
 		\
-		git submodule update --init --recursive ; \
 		go mod tidy ; \
 		\
+		go get github.com/daeuniverse/quic-go@latest ; \
+		go mod tidy ; \
+		\
+		git submodule update --init --recursive ; \
 		popd ; \
 	)
 endef
