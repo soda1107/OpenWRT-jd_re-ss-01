@@ -1,5 +1,4 @@
 #!/bin/sh
-
 set -eu
 
 RULE_DIR="/etc/momo/ruleset"
@@ -8,15 +7,22 @@ TMP_DIR="$RULE_DIR/.tmp"
 mkdir -p "$RULE_DIR" "$TMP_DIR"
 cd "$RULE_DIR" || exit 1
 
+# 检查 sing-box 是否存在
+if ! command -v sing-box >/dev/null 2>&1; then
+    echo "$(date +'%F %T') ⚠ sing-box 未安装，跳过规则转换" >> "$LOG_FILE"
+    SINGBOX_AVAILABLE=0
+else
+    SINGBOX_AVAILABLE=1
+fi
+
 # 日志截断（超过 1MB）
 MAX_SIZE=1048576
 [ -f "$LOG_FILE" ] && [ "$(wc -c <"$LOG_FILE")" -gt "$MAX_SIZE" ] && echo "日志超过 1MB，自动清理..." > "$LOG_FILE"
 
-# 并发数（按需调整）
+# 并发数
 CONCURRENCY=4
 
-# 并发下载函数（兼容 BusyBox）
-# 参数: 并发数, 然后若干 "localfile|url" 项
+# 并发下载函数
 parallel_download() {
     max_jobs="$1"; shift
     for pair in "$@"; do
@@ -28,14 +34,11 @@ parallel_download() {
             if wget --no-check-certificate -q -O "$tmp" "$url"; then
                 mv -f "$tmp" "$file"
                 echo "$(date +'%F %T') ✔ 成功: $file" >> "$LOG_FILE"
-                echo "✔ $file"
             else
                 rm -f "$tmp"
                 echo "$(date +'%F %T') ✘ 失败: $file" >> "$LOG_FILE"
-                echo "✘ $file"
             fi
         ) &
-        # 控制并发：当后台任务数 >= max_jobs 时，等待到低于阈值
         while [ "$(jobs -p | wc -l)" -ge "$max_jobs" ]; do
             sleep 1
         done
@@ -43,7 +46,7 @@ parallel_download() {
     wait
 }
 
-# 单文件下载（保留用于单独调用或回退）
+# 单文件下载
 download_once() {
     file="$1"; url="$2"
     tmp="$TMP_DIR/${file}.$$"
@@ -51,12 +54,10 @@ download_once() {
     if wget --no-check-certificate -q -O "$tmp" "$url"; then
         mv -f "$tmp" "$file"
         echo "$(date +'%F %T') ✔ 成功: $file" >> "$LOG_FILE"
-        echo "✔ $file"
         return 0
     else
         rm -f "$tmp"
         echo "$(date +'%F %T') ✘ 失败: $file" >> "$LOG_FILE"
-        echo "✘ $file"
         return 1
     fi
 }
@@ -64,7 +65,6 @@ download_once() {
 # 基础地址
 BASE="https://gh-proxy.com/https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/sing/geo"
 
-# 构建并发下载列表（保持你原有的固定列表并新增 github.srs）
 pairs=(
 "ads.srs|$BASE/geosite/category-ads-all.srs"
 "private.srs|$BASE/geosite/private.srs"
@@ -84,42 +84,42 @@ pairs=(
 "github.srs|$BASE/geosite/github.srs"
 )
 
-# 执行并发下载
 parallel_download "$CONCURRENCY" "${pairs[@]}"
 
-# fakeipfilter.json 下载与转换（保留原逻辑）
+# fakeipfilter.json 下载与转换
 FAKEIP_URL="https://gh-proxy.com/https://raw.githubusercontent.com/qichiyuhub/rule/refs/heads/main/rules/fakeipfilter.json"
 if download_once "fakeipfilter.json" "$FAKEIP_URL"; then
-    echo "转换 fakeipfilter.json → geosite-fakeipfilter.srs" >> "$LOG_FILE"
-    if sing-box rule-set compile --output geosite-fakeipfilter.srs fakeipfilter.json >/dev/null 2>&1; then
-        echo "$(date +'%F %T') ✔ 成功生成 geosite-fakeipfilter.srs" >> "$LOG_FILE"
-        rm -f fakeipfilter.json
+    if [ "$SINGBOX_AVAILABLE" -eq 1 ]; then
+        if sing-box rule-set compile --output geosite-fakeipfilter.srs fakeipfilter.json >/dev/null 2>&1; then
+            echo "$(date +'%F %T') ✔ 成功生成 geosite-fakeipfilter.srs" >> "$LOG_FILE"
+            rm -f fakeipfilter.json
+        else
+            echo "$(date +'%F %T') ✘ 转换失败（保留 fakeipfilter.json）" >> "$LOG_FILE"
+        fi
     else
-        echo "$(date +'%F %T') ✘ 转换失败（保留 fakeipfilter.json）" >> "$LOG_FILE"
+        echo "$(date +'%F %T') ⚠ sing-box 不可用，跳过 fakeipfilter 转换" >> "$LOG_FILE"
     fi
-else
-    echo "$(date +'%F %T') ✘ 未找到 fakeipfilter.json，跳过转换" >> "$LOG_FILE"
 fi
 
-# 生成 trackerslist.srs（保留原逻辑）
-echo "生成 trackerslist.srs（ngosang）"
+# 生成 trackerslist.srs
 TRACKERS_URL="https://gh-proxy.com/https://raw.githubusercontent.com/ngosang/trackerslist/master/trackers_all.txt"
 TRACKERS_TXT="$TMP_DIR/trackers_all.txt.$$"
 if wget --no-check-certificate -q -O "$TRACKERS_TXT" "$TRACKERS_URL"; then
     awk 'BEGIN { print "{\"version\":1,\"rules\":[" } { gsub(/"/, "\\\""); printf "%s{\"domain\":\"%s\"}", (NR==1?"":","), $0 } END { print "]}" }' "$TRACKERS_TXT" > "$TMP_DIR/trackers_all.json.$$"
-    if sing-box rule-set compile --output trackerslist.srs "$TMP_DIR/trackers_all.json.$$" >/dev/null 2>&1; then
-        echo "$(date +'%F %T') ✔ 成功生成 trackerslist.srs" >> "$LOG_FILE"
-        echo "✔ trackerslist.srs"
+    if [ "$SINGBOX_AVAILABLE" -eq 1 ]; then
+        if sing-box rule-set compile --output trackerslist.srs "$TMP_DIR/trackers_all.json.$$" >/dev/null 2>&1; then
+            echo "$(date +'%F %T') ✔ 成功生成 trackerslist.srs" >> "$LOG_FILE"
+        else
+            echo "$(date +'%F %T') ✘ 生成 trackerslist.srs 失败" >> "$LOG_FILE"
+        fi
     else
-        echo "$(date +'%F %T') ✘ 生成 trackerslist.srs 失败" >> "$LOG_FILE"
+        echo "$(date +'%F %T') ⚠ sing-box 不可用，跳过 trackerslist 转换" >> "$LOG_FILE"
     fi
     rm -f "$TRACKERS_TXT" "$TMP_DIR/trackers_all.json.$$"
 else
     echo "$(date +'%F %T') ✘ 下载 trackers_all.txt 失败" >> "$LOG_FILE"
 fi
 
-# 清理临时目录
 rm -rf "$TMP_DIR"
 
 echo "$(date +'%F %T') 规则集更新完成。" >> "$LOG_FILE"
-echo "规则集更新完成."
