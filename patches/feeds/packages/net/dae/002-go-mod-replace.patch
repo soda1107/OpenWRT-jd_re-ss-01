@@ -1,0 +1,8 @@
+--- a/go.mod
++++ b/go.mod
+@@ -1,5 +1,6 @@
+ module github.com/daeuniverse/dae
+
+ go 1.21
+
++replace github.com/daeuniverse/outbound => ./outbound
