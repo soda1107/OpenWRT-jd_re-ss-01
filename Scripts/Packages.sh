@@ -76,13 +76,10 @@ UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-ap
 UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 
-<<<<<<< HEAD
 
 rm -rf ../feeds/packages/net/daed ../feeds/packages/net/dae
 rm -rf ./feeds/packages/daed ./feeds/packages/dae
 UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
-=======
->>>>>>> QCA-6.12-VIKINGYFY-IPQ60XX-NOWIFI_26.04.26-19.30.30
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
 #更新软件包版本
@@ -135,13 +132,6 @@ UPDATE_VERSION() {
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/v2ray-geodata
-<<<<<<< HEAD
-
-=======
-rm -rf package/dae luci-app-daed 2>/dev/null || true
-git clone --depth=1 --single-branch --branch kix https://github.com/QiuSimons/luci-app-daed.git package/dae
-echo "daed 已通过 git clone 替换完成，路径：package/dae"
->>>>>>> QCA-6.12-VIKINGYFY-IPQ60XX-NOWIFI_26.04.26-19.30.30
 
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
