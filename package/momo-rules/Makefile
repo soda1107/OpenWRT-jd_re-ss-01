@@ -23,4 +23,7 @@ define Package/momo-rules/install
 	$(INSTALL_BIN) ./99-momo-rules $(1)/etc/uci-defaults/99-momo-rules
 endef
 
+define Build/Compile
+endef
+
 $(eval $(call BuildPackage,momo-rules))
