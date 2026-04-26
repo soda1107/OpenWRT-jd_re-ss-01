@@ -76,7 +76,6 @@ UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "luci-app-timewol luci-ap
 UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 
-UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
 #更新软件包版本
@@ -129,33 +128,9 @@ UPDATE_VERSION() {
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/v2ray-geodata
-
-# 在仓库根创建 patches 文件（如果不存在）
-if [ -d "$GITHUB_WORKSPACE/package/dae" ]; then
-    echo "Removing local package/dae to avoid overriding feeds/packages/net/dae"
-    rm -rf "$GITHUB_WORKSPACE/package/dae"
-fi
-cp -r $GITHUB_WORKSPACE/package/* ./
-mkdir -p $GITHUB_WORKSPACE/patches/feeds/packages/net/dae
-cat > $GITHUB_WORKSPACE/patches/feeds/packages/net/dae/999-merge-outbound-pr63.patch <<'PATCH'
---- a/Makefile
-+++ b/Makefile
-@@ -1,6 +1,6 @@
- define Build/Prepare
--   $(call Build/Prepare/Default)
-+   $(call Build/Prepare/Default)
-+
-+   # --- merge outbound PR63 ---
-+   $(info Merging outbound PR#63 into dae build)
-+   git clone https://github.com/daeuniverse/outbound.git $(PKG_BUILD_DIR)/outbound
-+   git -C $(PKG_BUILD_DIR)/outbound fetch origin pull/63/head:pr-63
-+   git -C $(PKG_BUILD_DIR)/outbound checkout pr-63
-+   cd $(PKG_BUILD_DIR) && go mod edit -replace=github.com/daeuniverse/outbound=./outbound
-+   cd $(PKG_BUILD_DIR) && go mod tidy
- endef
-PATCH
-
-echo "Created patch: patches/feeds/packages/net/dae/999-merge-outbound-pr63.patch"
+rm -rf package/dae luci-app-daed 2>/dev/null || true
+git clone --depth=1 --single-branch --branch kix https://github.com/QiuSimons/luci-app-daed.git package/dae
+echo "daed 已通过 git clone 替换完成，路径：package/dae"
 
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
