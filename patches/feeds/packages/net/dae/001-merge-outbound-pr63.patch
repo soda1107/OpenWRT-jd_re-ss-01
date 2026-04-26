@@ -1,0 +1,14 @@
+--- a/Makefile
++++ b/Makefile
+@@ -40,6 +40,20 @@ define Build/Prepare
+        $(call Build/Prepare/Default)
+
++       # --- merge outbound PR63 ---
++       rm -rf $(PKG_BUILD_DIR)/outbound
++       git clone https://github.com/daeuniverse/outbound.git $(PKG_BUILD_DIR)/outbound
++       git -C $(PKG_BUILD_DIR)/outbound fetch origin pull/63/head:pr-63
++       git -C $(PKG_BUILD_DIR)/outbound checkout pr-63
++
++       cd $(PKG_BUILD_DIR) && go mod edit -replace=github.com/daeuniverse/outbound=./outbound
++       cd $(PKG_BUILD_DIR) && go mod tidy
+ endef
