@@ -133,9 +133,9 @@ UPDATE_VERSION() {
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ./dae
 git clone https://github.com/QiuSimons/luci-app-daed dae
-
-# 修正前端资源拷贝方式，避免 web 目录为空
 sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|mkdir -p $(PKG_BUILD_DIR)/webrender/web ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|' dae/daed/Makefile
+mkdir -p dae/daed/webrender/web
+touch dae/daed/webrender/web/.keep
 #rm -rf ../feeds/packages/net/v2ray-geodata
 #git clone https://github.com/QiuSimons/luci-app-daed package/dae
 #修复daed/Makefile
