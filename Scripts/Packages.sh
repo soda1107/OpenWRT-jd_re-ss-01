@@ -131,16 +131,17 @@ UPDATE_VERSION() {
 
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
+rm -rf wrt/feeds/luci/applications/luci-app-daed
+rm -rf wrt/package/*/luci-app-daed wrt/package/*/*/luci-app-daed 2>/dev/null || true
 rm -rf ./dae
 git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git dae
-#sed -i 's/^CORE_VERSION:=core-b80fec2$/CORE_VERSION:=core-41a0626/' dae/daed/Makefile
 sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|echo placeholder > $(PKG_BUILD_DIR)/webrender/web/placeholder.txt ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
 grep -n "placeholder.txt" dae/daed/Makefile || exit 1
-rm -rf wrt/package/dae/daed
+rm -rf wrt/package/dae/daed wrt/package/dae/luci-app-daed
 mkdir -p wrt/package/dae
-[ -d dae/daed ] && cp -rf dae/daed wrt/package/dae/
-[ -d dae/daed-geoip ] && cp -rf dae/daed-geoip wrt/package/dae/
-[ -d dae/daed-geosite ] && cp -rf dae/daed-geosite wrt/package/dae/
-cp -rf dae/daed wrt/package/dae/daed
+cp -rf dae/daed wrt/package/dae/
+cp -rf dae/luci-app-daed wrt/package/dae/
+# 可选：验证你用到的 luci-app-daed 没有 daed-geoip/geosite 依赖
+grep -n "LUCI_DEPENDS" wrt/package/dae/luci-app-daed/Makefile
 
 
