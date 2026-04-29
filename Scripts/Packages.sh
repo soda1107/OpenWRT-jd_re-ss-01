@@ -138,6 +138,9 @@ sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/w
 grep -n "placeholder.txt" dae/daed/Makefile || exit 1
 rm -rf wrt/package/dae/daed
 mkdir -p wrt/package/dae
+[ -d dae/daed ] && cp -rf dae/daed wrt/package/dae/
+[ -d dae/daed-geoip ] && cp -rf dae/daed-geoip wrt/package/dae/
+[ -d dae/daed-geosite ] && cp -rf dae/daed-geosite wrt/package/dae/
 cp -rf dae/daed wrt/package/dae/daed
 
 
