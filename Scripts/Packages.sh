@@ -141,6 +141,8 @@ rm -rf wrt/package/dae/daed wrt/package/dae/luci-app-daed
 mkdir -p wrt/package/dae
 cp -rf dae/daed wrt/package/dae/
 cp -rf dae/luci-app-daed wrt/package/dae/
+rm -rf build_dir/target-*/luci-app-daed* build_dir/target-*/daed-*
+rm -rf bin/packages/*/*/luci-app-daed*.apk 2>/dev/null || true
 # 可选：验证你用到的 luci-app-daed 没有 daed-geoip/geosite 依赖
 grep -n "LUCI_DEPENDS" wrt/package/dae/luci-app-daed/Makefile
 
