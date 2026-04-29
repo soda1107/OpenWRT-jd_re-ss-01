@@ -133,6 +133,7 @@ UPDATE_VERSION() {
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ./dae
 git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git dae
+sed -i 's/^CORE_VERSION:=core-b80fec2$/CORE_VERSION:=core-41a0626/' dae/daed/Makefile
 sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|echo placeholder > $(PKG_BUILD_DIR)/webrender/web/placeholder.txt ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
 grep -n "placeholder.txt" dae/daed/Makefile || exit 1
 rm -rf wrt/package/dae/daed
