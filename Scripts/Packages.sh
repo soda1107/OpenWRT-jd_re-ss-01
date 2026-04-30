@@ -77,8 +77,6 @@ UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 
 
-rm -rf ../feeds/packages/net/daed ../feeds/packages/net/dae
-rm -rf ./feeds/packages/daed ./feeds/packages/dae
 UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
