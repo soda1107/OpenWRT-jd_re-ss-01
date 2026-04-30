@@ -127,24 +127,24 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
 
+rm -rf ../feeds/luci/applications/luci-app-daed
+rm -rf wrt/package/*/luci-app-daed wrt/package/*/*/luci-app-daed
+rm -rf dae
+rm -rf package/luci-app-daed
 
-# 删除旧内容
-rm -rf ./dae
-rm -rf wrt/package/dae/daed wrt/package/dae/luci-app-daed
-
-# 拉仓库
 git clone https://github.com/QiuSimons/luci-app-daed.git dae
-
 cd dae
 git checkout e9105f9eecb6fef57305c9fbd35f05168bf2a1bc
 cd ..
 
-# patch
-sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|echo placeholder > $(PKG_BUILD_DIR)/webrender/web/placeholder.txt ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
+sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|mkdir -p $(PKG_BUILD_DIR)/webrender/web ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
 
-grep -n "placeholder.txt" dae/daed/Makefile || exit 1
-
-# 拷贝
+rm -rf wrt/package/dae
 mkdir -p wrt/package/dae
+
 cp -rf dae/daed wrt/package/dae/
 cp -rf dae/luci-app-daed wrt/package/dae/
+
+rm -rf build_dir/target-*/daed*
+rm -rf staging_dir/target-*/pkginfo/daed*
+rm -rf tmp/.packageinfo*
