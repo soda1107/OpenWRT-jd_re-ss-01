@@ -128,13 +128,6 @@ UPDATE_VERSION() {
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,dae*,bypass*}
 rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
 cp -r $GITHUB_WORKSPACE/package/* ./
-#修复daed/Makefile
-#rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
-sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
-sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
-#cat luci-app-daed/daed/Makefile
-#UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
-# 清理旧版本残留
 rm -rf ../feeds/luci/applications/luci-app-daed ../feeds/packages/net/dae* ./feeds/packages/dae ./feeds/packages/daed
 
 # 拉取 QiuSimons 的 luci-app-daed
