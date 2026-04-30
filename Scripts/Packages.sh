@@ -137,8 +137,6 @@ cd dae
 git checkout e9105f9eecb6fef57305c9fbd35f05168bf2a1bc
 cd ..
 
-sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|mkdir -p $(PKG_BUILD_DIR)/webrender/web ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
-
 rm -rf wrt/package/dae
 mkdir -p wrt/package/dae
 
