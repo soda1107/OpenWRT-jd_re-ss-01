@@ -127,24 +127,11 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
 
-# 先清理旧的 daed 相关内容（当前目录就是 wrt/package）
-rm -rf ../feeds/luci/applications/luci-app-daed
-rm -rf ../feeds/packages/net/dae ../feeds/packages/net/daed
-rm -rf dae luci-app-daed
-rm -rf *dae*
-
-# 拉 QiuSimons 仓库到临时目录
-tmpdir="$(mktemp -d)"
-git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git "$tmpdir/qiusimons-daed"
-
-# 放到 OpenWrt package 树：wrt/package/dae/daed 和 wrt/package/dae/luci-app-daed
-mkdir -p dae
-cp -rf "$tmpdir/qiusimons-daed/daed" dae/
-cp -rf "$tmpdir/qiusimons-daed/luci-app-daed" dae/
-rm -rf "$tmpdir"
-
-# 切到 v2ray geo 依赖
-sed -i 's/+daed-geoip/+v2ray-geoip/g; s/+daed-geosite/+v2ray-geosite/g' dae/luci-app-daed/Makefile
-
-# 校验一下
-grep -n "v2ray-geoip\|v2ray-geosite" dae/luci-app-daed/Makefile
+rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,dae*,bypass*}
+rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
+cp -r $GITHUB_WORKSPACE/package/* ./
+#修复daed/Makefile
+#rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
+sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
+sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
+#cat luci-app-daed/daed/Makefile
