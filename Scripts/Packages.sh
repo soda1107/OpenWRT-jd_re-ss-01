@@ -134,10 +134,18 @@ sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-d
 sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
 #cat luci-app-daed/daed/Makefile
 #UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
+# 清理旧版本残留
+rm -rf ../feeds/luci/applications/luci-app-daed ../feeds/packages/net/dae* ./feeds/packages/dae ./feeds/packages/daed
 
-rm -rf ../feeds/luci/applications/luci-app-daed
-rm -rf ../feeds/packages/net/dae*
-rm -rf ./feeds/packages/dae ./feeds/packages/daed
+# 拉取 QiuSimons 的 luci-app-daed
+tmpdir="$(mktemp -d)"
+echo "Cloning QiuSimons repository..."
 git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git "$tmpdir/qiusimons-daed"
-cp -rf "$tmpdir/qiusimons-daed/daed" dae/
-cp -rf "$tmpdir/qiusimons-daed/luci-app-daed" dae/
+cp -rf "$tmpdir/qiusimons-daed/"* dae/
+rm -rf "$tmpdir"
+
+# 修复 Makefile 和 init.d 文件
+sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' ./dae/daed/Makefile
+sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' ./dae/luci-app-daed/root/etc/init.d/luci_daed
+
+echo "Script execution completed."
