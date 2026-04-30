@@ -144,6 +144,8 @@ mkdir -p wrt/package/dae
 
 cp -rf dae/daed wrt/package/dae/
 cp -rf dae/luci-app-daed wrt/package/dae/
+sed -i 's/+daed-geoip/+v2ray-geoip/g' wrt/package/dae/luci-app-daed/Makefile
+sed -i 's/+daed-geosite/+v2ray-geosite/g' wrt/package/dae/luci-app-daed/Makefile
 
 rm -rf build_dir/target-*/daed*
 rm -rf staging_dir/target-*/pkginfo/daed*
