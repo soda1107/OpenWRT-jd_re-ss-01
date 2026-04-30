@@ -127,18 +127,35 @@ UPDATE_VERSION() {
 
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,dae*,bypass*}
 rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
-cp -r $GITHUB_WORKSPACE/package/* ./
-rm -rf ../feeds/luci/applications/luci-app-daed ../feeds/packages/net/dae* ./feeds/packages/dae ./feeds/packages/daed
+[ -d "$GITHUB_WORKSPACE/package" ] && cp -r "$GITHUB_WORKSPACE"/package/* ./
+# 删除官方同名包
+rm -rf ../feeds/packages/net/daed
+rm -rf ../feeds/luci/applications/luci-app-daed
 
-# 拉取 QiuSimons 的 luci-app-daed
-tmpdir="$(mktemp -d)"
-echo "Cloning QiuSimons repository..."
-git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git "$tmpdir/qiusimons-daed"
-cp -rf "$tmpdir/qiusimons-daed/"* dae/
-rm -rf "$tmpdir"
+# 清理旧目录
+rm -rf ./dae ./qiusimons-daed
 
-# 修复 Makefile 和 init.d 文件
-sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' ./dae/daed/Makefile
-sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' ./dae/luci-app-daed/root/etc/init.d/luci_daed
+# 克隆上游到固定目录
+git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git ./qiusimons-daed
 
-echo "Script execution completed."
+# 修补 daed Makefile
+sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|echo placeholder > $(PKG_BUILD_DIR)/webrender/web/placeholder.txt ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' ./qiusimons-daed/daed/Makefile
+grep -n "placeholder.txt" ./qiusimons-daed/daed/Makefile || exit 1
+
+# 创建目标目录
+mkdir -p ./dae
+
+# 覆盖到真正参与编译的位置
+cp -rf ./qiusimons-daed/daed ./dae/
+cp -rf ./qiusimons-daed/luci-app-daed ./dae/
+
+# 可选：如果你确实还要改 luci_daed 启动脚本，就在这里改
+# sed -i 's/原内容/新内容/g' ./dae/luci-app-daed/root/etc/init.d/luci_daed
+
+# 校验
+test -f ./dae/daed/Makefile || exit 1
+test -f ./dae/luci-app-daed/Makefile || exit 1
+test -f ./dae/luci-app-daed/root/etc/init.d/luci_daed || exit 1
+
+# 清理临时克隆目录
+rm -rf ./qiusimons-daed
