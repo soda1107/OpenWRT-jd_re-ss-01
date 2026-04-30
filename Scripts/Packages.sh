@@ -128,22 +128,23 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "tailscale"
 
 
-
-#删除官方的默认插件
-rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
-rm -rf wrt/feeds/luci/applications/luci-app-daed
-rm -rf wrt/package/*/luci-app-daed wrt/package/*/*/luci-app-daed 2>/dev/null || true
+# 删除旧内容
 rm -rf ./dae
-git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git dae
-sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|echo placeholder > $(PKG_BUILD_DIR)/webrender/web/placeholder.txt ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
-grep -n "placeholder.txt" dae/daed/Makefile || exit 1
 rm -rf wrt/package/dae/daed wrt/package/dae/luci-app-daed
+
+# 拉仓库
+git clone https://github.com/QiuSimons/luci-app-daed.git dae
+
+cd dae
+git checkout e9105f9eecb6fef57305c9fbd35f05168bf2a1bc
+cd ..
+
+# patch
+sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|echo placeholder > $(PKG_BUILD_DIR)/webrender/web/placeholder.txt ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
+
+grep -n "placeholder.txt" dae/daed/Makefile || exit 1
+
+# 拷贝
 mkdir -p wrt/package/dae
 cp -rf dae/daed wrt/package/dae/
 cp -rf dae/luci-app-daed wrt/package/dae/
-rm -rf build_dir/target-*/luci-app-daed* build_dir/target-*/daed-*
-rm -rf bin/packages/*/*/luci-app-daed*.apk 2>/dev/null || true
-# 可选：验证你用到的 luci-app-daed 没有 daed-geoip/geosite 依赖
-grep -n "LUCI_DEPENDS" wrt/package/dae/luci-app-daed/Makefile
-
-
