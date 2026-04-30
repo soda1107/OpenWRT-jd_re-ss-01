@@ -140,3 +140,6 @@ sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_par
 rm -rf ../feeds/luci/applications/luci-app-daed
 rm -rf ../feeds/packages/net/dae*
 rm -rf ./feeds/packages/dae ./feeds/packages/daed
+git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git "$tmpdir/qiusimons-daed"
+cp -rf "$tmpdir/qiusimons-daed/daed" dae/
+cp -rf "$tmpdir/qiusimons-daed/luci-app-daed" dae/
