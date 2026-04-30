@@ -135,3 +135,13 @@ cp -r $GITHUB_WORKSPACE/package/* ./
 sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
 sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
 #cat luci-app-daed/daed/Makefile
+rm -rf dae
+tmpdir="$(mktemp -d)"
+git clone --depth=1 -b kix https://github.com/QiuSimons/luci-app-daed.git "$tmpdir/qiusimons-daed"
+
+mkdir -p dae
+cp -rf "$tmpdir/qiusimons-daed/daed" dae/
+cp -rf "$tmpdir/qiusimons-daed/luci-app-daed" dae/
+rm -rf "$tmpdir"
+
+sed -i 's|cp -rf $(DAED_BUILD_DIR)/apps/web/dist/\* $(PKG_BUILD_DIR)/webrender/web ;|mkdir -p $(PKG_BUILD_DIR)/webrender/web ; cp -rf $(DAED_BUILD_DIR)/apps/web/dist/. $(PKG_BUILD_DIR)/webrender/web/ ;|g' dae/daed/Makefile
