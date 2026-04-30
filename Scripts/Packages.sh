@@ -128,23 +128,10 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "tailscale"
 
 rm -rf ../feeds/luci/applications/luci-app-daed
-rm -rf wrt/package/*/luci-app-daed wrt/package/*/*/luci-app-daed
-rm -rf dae
-rm -rf package/luci-app-daed
+# 1. 删除旧 dae
+rm -rf package/*dae*
 
-git clone https://github.com/QiuSimons/luci-app-daed.git dae
-cd dae
-git checkout e9105f9eecb6fef57305c9fbd35f05168bf2a1bc
-cd ..
+# 2. 拉 QiuSimons UI
+git clone -b kix https://github.com/QiuSimons/luci-app-daed.git package/luci-app-daed
 
-rm -rf wrt/package/dae
-mkdir -p wrt/package/dae
 
-cp -rf dae/daed wrt/package/dae/
-cp -rf dae/luci-app-daed wrt/package/dae/
-sed -i 's/+daed-geoip/+v2ray-geoip/g' wrt/package/dae/luci-app-daed/Makefile
-sed -i 's/+daed-geosite/+v2ray-geosite/g' wrt/package/dae/luci-app-daed/Makefile
-
-rm -rf build_dir/target-*/daed*
-rm -rf staging_dir/target-*/pkginfo/daed*
-rm -rf tmp/.packageinfo*
