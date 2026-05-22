@@ -34,9 +34,9 @@ jobs:
       matrix:
 #        CONFIG: [IPQ807X-NOWIFI, IPQ807X-WIFI,IPQ60XX-NOWIFI, IPQ60XX-WIFI]
         CONFIG: [IPQ60XX-NOWIFI, IPQ60XX-WIFI]
-#        SOURCE: [VIKINGYFY/immortalwrt]
-        SOURCE: [davidtall/immortalwrt]
-        BRANCH: [stable]
+        SOURCE: [VIKINGYFY/immortalwrt]
+#        SOURCE: [davidtall/immortalwrt]
+        BRANCH: [main]
 
     #调用公用编译核心WRT-CORE.yml
     uses: ./.github/workflows/WRT-CORE.yml
