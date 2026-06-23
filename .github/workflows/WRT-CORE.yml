@@ -173,7 +173,7 @@ jobs:
           set -x
 
           ./scripts/feeds update -a
-          ./scripts/feeds install -a  2>&1 | tee feeds_install.log || {
+          ./scripts/feeds install -a -f -v 2>&1| tee feeds_install.log || {
              echo "❌ feeds install failed"
              tail -n 200 feeds_install.log
              exit 1
