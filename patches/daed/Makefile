@@ -103,6 +103,7 @@ define Build/Prepare
 		rm -rf $(DAED_BUILD_DIR) ; \
 		mkdir -p $(DAED_BUILD_DIR) ; \
 		$(TAR) --strip-components=1 -C $(DAED_BUILD_DIR) -xzf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.gz ; \
+        $(if $(wildcard $(CURDIR)/0001-detach-bpf-hooks-on-dashboard-stop.patch),$(call PatchDir,$(PKG_BUILD_DIR),$(CURDIR)/patches,)); \
 		git clone https://github.com/daeuniverse/dae-wing $(PKG_BUILD_DIR) && \
 			git -C $(PKG_BUILD_DIR) checkout $(WING_HASH_SHORT) ; \
 		rm -rf $(PKG_BUILD_DIR)/dae-core ; \
