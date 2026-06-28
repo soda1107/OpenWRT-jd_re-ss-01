@@ -97,30 +97,27 @@ endef
 NODE_VERSION:=v24.12.0
 NODE_DIST:=node-$(NODE_VERSION)-linux-x64
 NODE_URL:=https://nodejs.org/dist/$(NODE_VERSION)/$(NODE_DIST).tar.xz
+PATCH_FILE:=$(TOPDIR)/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch
 
 define Build/Prepare
 	( \
 		rm -rf $(DAED_BUILD_DIR) ; \
 		mkdir -p $(DAED_BUILD_DIR) ; \
 		$(TAR) --strip-components=1 -C $(DAED_BUILD_DIR) -xzf $(DL_DIR)/$(PKG_NAME)-$(PKG_VERSION).tar.gz ; \
-        $(if $(wildcard $(CURDIR)/0001-detach-bpf-hooks-on-dashboard-stop.patch),$(call PatchDir,$(PKG_BUILD_DIR),$(CURDIR)/patches,)); \
 		git clone https://github.com/daeuniverse/dae-wing $(PKG_BUILD_DIR) && \
 			git -C $(PKG_BUILD_DIR) checkout $(WING_HASH_SHORT) ; \
 		rm -rf $(PKG_BUILD_DIR)/dae-core ; \
 		git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core && \
 			git -C $(PKG_BUILD_DIR)/dae-core checkout $(CORE_HASH_SHORT) ; \
-		rm -rf $(DAED_BUILD_DIR)/outbound ; \
-		git clone --depth=1 -b perf/complete-optimizations https://github.com/olicesx/outbound.git $(DAED_BUILD_DIR)/outbound ; \
-		rm -rf $(DAED_BUILD_DIR)/quic-go ; \
-		git clone --depth=1 -b perf/node-pooling-v2 https://github.com/olicesx/quic-go.git $(DAED_BUILD_DIR)/quic-go ; \
+		if [ -f "$(PATCH_FILE)" ]; then \
+			patch -p1 -d $(PKG_BUILD_DIR)/dae-core < "$(PATCH_FILE)" ; \
+		fi ; \
 		pushd $(PKG_BUILD_DIR)/dae-core ; \
 			git submodule update --init ; \
 			go get -u=patch ; \
 			go mod tidy ; \
 		popd ; \
 		pushd $(PKG_BUILD_DIR) ; \
-			go mod edit -replace github.com/daeuniverse/outbound=../outbound ; \
-			go mod edit -replace github.com/olicesx/quic-go=../quic-go ; \
 			go get -u=patch ; \
 			go mod tidy ; \
 			wget -qO default.pgo "https://github.com/QiuSimons/luci-app-dae/raw/refs/heads/kix/dae/pprof/default.pgo" ; \
@@ -131,7 +128,7 @@ define Build/Prepare
 		export XDG_CONFIG_HOME="$(DAED_BUILD_DIR)/.node_tmp/config" ; \
 		npm install -g pnpm ; \
 		pushd $(DAED_BUILD_DIR) ; \
-			pnpm install --no-frozen-lockfile ; \
+			pnpm install ; \
 			pnpm build --filter daed ; \
 		popd ; \
 		mkdir -p $(PKG_BUILD_DIR)/webrender/web ; \
