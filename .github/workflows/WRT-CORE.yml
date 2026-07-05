@@ -183,23 +183,10 @@ jobs:
       - name: Patch Daed
         run: |
           set -euo pipefail
-          PATCH="$GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch"
-          TARGET="./wrt/package/luci-app-daed/daed"
-          echo "Patch start: $(date -u)"
-          [ -d "$TARGET" ] || { echo "Target not found: $TARGET"; exit 2; }
-          [ -f "$PATCH" ] || { echo "Patch not found: $PATCH"; exit 3; }
-          cd "$TARGET"
-          command -v dos2unix >/dev/null 2>&1 && dos2unix "$PATCH" || true
-          if patch -p1 --dry-run < "$PATCH" 2>/tmp/patch_err; then
-            patch -p1 < "$PATCH" && echo "patch -p1 applied" || { echo "patch -p1 failed"; tail -n 50 /tmp/patch_err; exit 4; }
-          else
-            echo "patch -p1 dry-run failed, trying -p0"
-            if patch -p0 --dry-run < "$PATCH" 2>/tmp/patch_err; then
-              patch -p0 < "$PATCH" && echo "patch -p0 applied" || { echo "patch -p0 failed"; tail -n 50 /tmp/patch_err; exit 5; }
-            else
-              echo "All patch attempts failed"; tail -n 200 /tmp/patch_err; exit 6
-            fi
-          fi
+          awk '/^--- a\//{p=1} p{print}' "$GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch" > /tmp/daed.diff
+          dos2unix /tmp/daed.diff 2>/dev/null || true
+          [ -d ./wrt/package/luci-app-daed/daed ] || { echo "Target not found: ./wrt/package/luci-app-daed/daed"; exit 2; }
+          ( cd ./wrt/package/luci-app-daed/daed && (patch -p1 --dry-run < /tmp/daed.diff && patch -p1 < /tmp/daed.diff) || (patch -p0 --dry-run < /tmp/daed.diff && patch -p0 < /tmp/daed.diff) )
 
       - name: Custom Settings
         run: |
