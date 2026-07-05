@@ -170,14 +170,13 @@ jobs:
       - name: Update Feeds
         run: |
           cd ./wrt/
-          set -x
-
           ./scripts/feeds update -a
-          ./scripts/feeds install -a -f -v 2>&1| tee feeds_install.log || {
-             echo "❌ feeds install failed"
-             tail -n 200 feeds_install.log
-             exit 1
-          }
+          ./scripts/feeds install -a 
+
+      - name: Patch Daed
+        run: |
+          cd ./wrt/package/daed
+          patch -p1 < $GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch
 
       - name: Custom Packages
         run: |
