@@ -185,8 +185,9 @@ jobs:
           set -euo pipefail
           awk '/^--- a\//{p=1} p{print}' "$GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch" > /tmp/daed.diff
           dos2unix /tmp/daed.diff 2>/dev/null || true
-          [ -d ./wrt/package/luci-app-daed/daed ] || { echo "Target not found: ./wrt/package/luci-app-daed/daed"; exit 2; }
-          ( cd ./wrt/package/luci-app-daed/daed && (patch -p1 --dry-run < /tmp/daed.diff && patch -p1 < /tmp/daed.diff) || (patch -p0 --dry-run < /tmp/daed.diff && patch -p0 < /tmp/daed.diff) )
+          cd ./wrt/package/luci-app-daed/daed
+          patch -p1 --dry-run < /tmp/daed.diff
+          patch -p1 < /tmp/daed.diff
 
       - name: Custom Settings
         run: |
