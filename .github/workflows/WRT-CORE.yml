@@ -183,10 +183,9 @@ jobs:
       - name: Patch Daed
         run: |
           set -euo pipefail
-          find ./wrt/package/luci-app-daed/daed -type f -name '*.go'
-          sed -n '1,200p' $(find ./wrt/package/luci-app-daed/daed -type f -name '*.go' | head -n 1)
           find ./wrt/package -type d -name dae
           find $(find ./wrt/package -type d -name dae) -type f -name '*.go'
+          sed -n '1,200p' $(find ./wrt/package/dae -type f -name '*.go' | head -n 1)
           awk '/^--- a\//{p=1} p{print}' "$GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch" > /tmp/daed.diff
           dos2unix /tmp/daed.diff 2>/dev/null || true
           cd ./wrt/package/luci-app-daed/daed
