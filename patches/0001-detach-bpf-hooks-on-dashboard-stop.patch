@@ -1,5 +1,5 @@
---- a/dae/run.go
-+++ b/dae/run.go
+--- a/cmd/run.go
++++ b/cmd/run.go
 @@ -138,6 +138,13 @@
             /* dae-wing start */
             newConf := newReloadMsg.Config
