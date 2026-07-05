@@ -1,0 +1,14 @@
+--- a/cmd/run.go
++++ b/cmd/run.go
+@@ -138,6 +138,13 @@ func run() {
+        newConf := newReloadMsg.Config
+
++       // openwrt-daede: dashboard stop reloads to EmptyConfig; detach hooks.
++       if newConf == EmptyConfig {
++           if e := c.DetachBpfHooks(); e != nil {
++               log.Errorln("[Stop] DetachBpfHooks:", e)
++           }
++       }
++
+        oldLogOutput := log.Out
+        log = logrus.New()

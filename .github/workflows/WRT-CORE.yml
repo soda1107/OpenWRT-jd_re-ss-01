@@ -180,18 +180,6 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
-      - name: Patch Daed
-        run: |
-          set -euo pipefail
-          find ./wrt/build_dir -type f -name run.go
-          find $(find ./wrt/package -type d -name dae) -type f -name '*.go'
-          sed -n '1,200p' $(find ./wrt/package/dae -type f -name '*.go' | head -n 1)
-          awk '/^--- a\//{p=1} p{print}' "$GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch" > /tmp/daed.diff
-          dos2unix /tmp/daed.diff 2>/dev/null || true
-          cd ./wrt/package/luci-app-daed/daed
-          patch -p1 --dry-run < /tmp/daed.diff
-          patch -p1 < /tmp/daed.diff
-
       - name: Custom Settings
         run: |
           . $GITHUB_WORKSPACE/Scripts/function.sh
