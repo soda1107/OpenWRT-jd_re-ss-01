@@ -173,17 +173,17 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a 
 
-      - name: Patch Daed
-        run: |
-          cd ./wrt/package/daed
-          patch -p1 < $GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch
-
       - name: Custom Packages
         run: |
           cd ./wrt/package/
 
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
+
+      - name: Patch Daed
+        run: |
+          cd ./wrt/package/luci-app-daed/daed
+          patch -p1 < $GITHUB_WORKSPACE/patches/0001-detach-bpf-hooks-on-dashboard-stop.patch
 
       - name: Custom Settings
         run: |
