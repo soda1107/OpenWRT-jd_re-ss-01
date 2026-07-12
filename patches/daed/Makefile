@@ -109,9 +109,6 @@ define Build/Prepare
 		rm -rf $(PKG_BUILD_DIR)/dae-core ; \
 		git clone https://github.com/daeuniverse/dae $(PKG_BUILD_DIR)/dae-core && \
 			git -C $(PKG_BUILD_DIR)/dae-core checkout $(CORE_HASH_SHORT) ; \
-		if [ -f "$(PATCH_FILE)" ]; then \
-			patch -p1 -d $(PKG_BUILD_DIR)/dae-core < "$(PATCH_FILE)" ; \
-		fi ; \
 		pushd $(PKG_BUILD_DIR)/dae-core ; \
 			git submodule update --init ; \
 			go get -u=patch ; \

@@ -198,6 +198,10 @@ jobs:
 
           make download -j$(nproc)
 
+      - name: Remove broken kernel patches
+        run: |
+          rm -f wrt/target/linux/generic/pending-6.12/712-net-dsa-qca8k-enable-assisted-learning-on-CPU-port.patch
+
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |
