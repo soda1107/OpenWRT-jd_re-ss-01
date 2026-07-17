@@ -179,7 +179,12 @@ jobs:
 
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
-
+      
+      - name: Patch Daed
+        run: |
+          cd ./wrt/package/luci-app-daed
+          patch -p1 < $GITHUB_WORKSPACE/patches/0002-modify-luci_daed-init.patch
+          
       - name: Custom Settings
         run: |
           . $GITHUB_WORKSPACE/Scripts/function.sh
