@@ -180,8 +180,8 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
           echo "=== LIST luci-app-daed ==="
-          ls -lR
-          find ./wrt/package/luci-app-daed -maxdepth 5 -type f -print
+          ls -lR luci-app-daed
+          find ./luci-app-daed -maxdepth 5 -type f -print
           $GITHUB_WORKSPACE/Scripts/FixDaedInit.sh
          
       - name: Custom Settings

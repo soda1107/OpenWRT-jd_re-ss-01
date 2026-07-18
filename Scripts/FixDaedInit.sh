@@ -1,24 +1,23 @@
 #!/bin/bash
 set -e
 
-BASE="./wrt/package"
+BASE="./luci-app-daed/luci-app-daed/root/etc/init.d"
+TARGET="$BASE/luci_daed"
 
-echo "[FixDaedInit] Searching luci_daed in $BASE ..."
+echo "[FixDaedInit] Target file: $TARGET"
 
-TARGET=$(find "$BASE" -maxdepth 10 -type f -name "luci_daed" | head -n 1)
-
-if [ -z "$TARGET" ]; then
+if [ ! -f "$TARGET" ]; then
     echo "[FixDaedInit] ERROR: luci_daed not found!"
-    echo "[FixDaedInit] Dumping directory tree:"
-    find "$BASE" -maxdepth 10 -type f -print
+    ls -l "$BASE" || true
     exit 1
 fi
 
-echo "[FixDaedInit] Found luci_daed at: $TARGET"
-
+# START=98 → START=99
 sed -i 's/^START=98/START=99/' "$TARGET"
+
+# 去掉 hijack_resolv_conf / restore_resolv_conf
 sed -i '/hijack_resolv_conf/d' "$TARGET"
 sed -i '/restore_resolv_conf/d' "$TARGET"
 
-echo "[FixDaedInit] Done. Showing first 80 lines:"
-sed -n '1,80p' "$TARGET"
+echo "[FixDaedInit] Done. First 40 lines:"
+sed -n '1,40p' "$TARGET"
