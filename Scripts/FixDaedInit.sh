@@ -2,7 +2,7 @@
 set -e
 
 echo "======================================"
-echo " Fix daed init and NSS ECM IPv6"
+echo " Fix daed init and NSS ECM IPv6 temp stop"
 echo "======================================"
 
 ########################################
@@ -19,7 +19,6 @@ echo "[Daed] Target: $TARGET"
 
 if [ ! -f "$TARGET" ]; then
     echo "[Daed] ERROR: luci_daed not found!"
-    echo "[Daed] Directory listing:"
     ls -la "$BASE" || true
     exit 1
 fi
@@ -39,16 +38,13 @@ sed -i '/restore_resolv_conf/d' "$TARGET"
 echo "[Daed] After:"
 grep -E "^START=|hijack_resolv_conf|restore_resolv_conf" "$TARGET" || true
 
-echo "[Daed] First 40 lines:"
-sed -n '1,40p' "$TARGET"
-
 
 ########################################
-# Disable NSS ECM IPv6 acceleration
+# NSS ECM IPv6 temp stop
 ########################################
 
 echo
-echo "===== Disable NSS ECM IPv6 acceleration ====="
+echo "===== Enable IPv6 ECM temp stop ====="
 
 
 ECM_SEARCH="$GITHUB_WORKSPACE/wrt"
@@ -56,53 +52,73 @@ ECM_SEARCH="$GITHUB_WORKSPACE/wrt"
 echo "[ECM] Searching source..."
 
 FILE=$(grep -rl \
-"ecm_front_end_ipv6_stopped = 0" \
+"ecm_front_end_ipv6_stopped" \
 "$ECM_SEARCH" \
-2>/dev/null | head -n 1 || true)
+2>/dev/null | grep "qca-nss-ecm" | head -n 1 || true)
 
 
 if [ -z "$FILE" ]; then
 
-    echo "[ECM] WARNING: Source variable not found."
+    echo "[ECM] ERROR: ECM source not found!"
 
-    echo "[ECM] Try searching variable name:"
     grep -R \
     "ecm_front_end_ipv6_stopped" \
     "$ECM_SEARCH" \
     2>/dev/null || true
 
-    echo "[ECM] Skip ECM patch."
+    exit 1
+
+fi
+
+
+echo "[ECM] Found:"
+echo "$FILE"
+
+
+echo "[ECM] Before:"
+grep -n \
+-e "ecm_front_end_ipv6_stopped" \
+-e "ecm_front_end_ipv6_stopped_temp" \
+"$FILE" || true
+
+
+########################################
+# 1. Keep permanent IPv6 ECM enabled
+########################################
+
+sed -i \
+'s/ecm_front_end_ipv6_stopped = 1/ecm_front_end_ipv6_stopped = 0/g' \
+"$FILE"
+
+
+########################################
+# 2. Disable IPv6 ECM by temp refcount
+########################################
+
+sed -i \
+'s/atomic_t ecm_front_end_ipv6_stopped_temp = ATOMIC_INIT(0)/atomic_t ecm_front_end_ipv6_stopped_temp = ATOMIC_INIT(1)/g' \
+"$FILE"
+
+
+echo
+echo "[ECM] After:"
+grep -n \
+-e "ecm_front_end_ipv6_stopped" \
+-e "ecm_front_end_ipv6_stopped_temp" \
+"$FILE" || true
+
+
+if grep -q \
+"atomic_t ecm_front_end_ipv6_stopped_temp = ATOMIC_INIT(1)" \
+"$FILE"; then
+
+    echo "[ECM] SUCCESS:"
+    echo "IPv6 ECM temp stopped (stopped=0,temp=1)"
+
 else
 
-    echo "[ECM] Found:"
-    echo "$FILE"
-
-
-    echo "[ECM] Before:"
-    grep "ecm_front_end_ipv6_stopped" "$FILE" || true
-
-
-    sed -i \
-    's/ecm_front_end_ipv6_stopped = 0/ecm_front_end_ipv6_stopped = 1/' \
-    "$FILE"
-
-
-    echo "[ECM] After:"
-    grep "ecm_front_end_ipv6_stopped" "$FILE" || true
-
-
-    if grep -q \
-    "ecm_front_end_ipv6_stopped = 1" \
-    "$FILE"; then
-
-        echo "[ECM] SUCCESS: IPv6 ECM disabled by default."
-
-    else
-
-        echo "[ECM] ERROR: Patch failed!"
-        exit 1
-
-    fi
+    echo "[ECM] ERROR: temp stop patch failed!"
+    exit 1
 
 fi
 
