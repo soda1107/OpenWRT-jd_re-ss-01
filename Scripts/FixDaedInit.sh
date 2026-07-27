@@ -91,39 +91,3 @@ sed -i \
 "$FILE"
 
 
-########################################
-# 2. Disable IPv6 ECM by temp refcount
-########################################
-
-sed -i \
-'s/atomic_t ecm_front_end_ipv6_stopped_temp = ATOMIC_INIT(0)/atomic_t ecm_front_end_ipv6_stopped_temp = ATOMIC_INIT(1)/g' \
-"$FILE"
-
-
-echo
-echo "[ECM] After:"
-grep -n \
--e "ecm_front_end_ipv6_stopped" \
--e "ecm_front_end_ipv6_stopped_temp" \
-"$FILE" || true
-
-
-if grep -q \
-"atomic_t ecm_front_end_ipv6_stopped_temp = ATOMIC_INIT(1)" \
-"$FILE"; then
-
-    echo "[ECM] SUCCESS:"
-    echo "IPv6 ECM temp stopped (stopped=0,temp=1)"
-
-else
-
-    echo "[ECM] ERROR: temp stop patch failed!"
-    exit 1
-
-fi
-
-
-echo
-echo "======================================"
-echo " All patches completed"
-echo "======================================"
