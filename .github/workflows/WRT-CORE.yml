@@ -163,9 +163,9 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Handles.sh
           $GITHUB_WORKSPACE/Scripts/FixDaedInit.sh
 
-      - name: Remove broken kernel patches
-        run: |
-          rm -f wrt/target/linux/generic/pending-6.12/712-net-dsa-qca8k-enable-assisted-learning-on-CPU-port.patch
+      #- name: Remove broken kernel patches
+      #  run: |
+      #    rm -f wrt/target/linux/generic/pending-6.12/712-net-dsa-qca8k-enable-assisted-learning-on-CPU-port.patch
          
       - name: Custom Settings
         run: |
