@@ -146,24 +146,6 @@ jobs:
         run: |
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
 
-      - name: Cache Dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ./wrt/.ccache
-            ./wrt/staging_dir
-          key: ${{ env.WRT_ARCH }}-${{ hashFiles('**/repo_flag') }}-${{ env.WRT_DATE }}
-          restore-keys: |
-            ${{ env.WRT_ARCH }}-${{ hashFiles('**/repo_flag') }}-
-            ${{ env.WRT_ARCH }}-
-
-      - name: Refresh the cache
-        run: |
-          if [ -d "./wrt/staging_dir" ]; then
-            find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r dir; do
-                find "$dir" -type f -exec touch {} +
-            done
-          fi            
 
 
 
@@ -180,6 +162,10 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
           $GITHUB_WORKSPACE/Scripts/FixDaedInit.sh
+
+      - name: Remove broken kernel patches
+        run: |
+          rm -f wrt/target/linux/generic/pending-6.12/712-net-dsa-qca8k-enable-assisted-learning-on-CPU-port.patch
          
       - name: Custom Settings
         run: |
@@ -190,7 +176,18 @@ jobs:
           
           $GITHUB_WORKSPACE/Scripts/Settings.sh
 
-          make defconfig -j$(nproc) && make clean -j$(nproc)
+          make defconfig -j$(nproc) 
+
+      - name: Cache Wrt Build
+        uses: stupidloud/cachewrtbuild@main
+        with:
+          ccache: true
+          toolchain: true
+          skip: true
+          clean: false
+          mixkey: ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}
+          prefix: ${{ github.workspace }}/wrt
+
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
@@ -199,10 +196,6 @@ jobs:
 
           make download -j$(nproc)
 
-      - name: Remove broken kernel patches
-        run: |
-          rm -f wrt/target/linux/generic/pending-6.12/712-net-dsa-qca8k-enable-assisted-learning-on-CPU-port.patch
-
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |
@@ -210,16 +203,6 @@ jobs:
 
           make -j$(nproc) || make -j1 V=s
 
-      - name: Delete Old Cache
-        run: |
-          # 获取缓存列表并删除
-          gh cache list --key ${{ env.WRT_ARCH }}-${{ hashFiles('**/repo_flag') }}- --json key --jq '.[] | .key' | while read -r key; do
-            gh cache delete "$key"
-          done
-          # 输出缓存状态
-          echo "========cache status========"
-          echo "ccache: $(du -sh ./wrt/.ccache | cut -f 1)"
-          echo "staging: $(du -sh ./wrt/staging_dir | cut -f 1)"
 
       - name: Machine Information
         run: |

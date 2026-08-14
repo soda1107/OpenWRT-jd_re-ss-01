@@ -80,6 +80,7 @@ UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 
 
 UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
+UPDATE_PACKAGE "luci-app-dae" "QiuSimons/luci-app-dae" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
 #更新软件包版本
@@ -130,17 +131,13 @@ UPDATE_VERSION() {
 
 
 #删除官方的默认插件
-rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,dae*,bypass*}
-rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
-cp -r $GITHUB_WORKSPACE/package/* ./
+#删除官方的默认插件
+rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
+rm -rf ../feeds/packages/net/{v2ray-geodata}
+cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
+
+
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
 sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
-#sed -i 's|github.com/daeuniverse/quic-go|github.com/olicesx/quic-go|g' luci-app-daed/daed/Makefile
-
 #sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
-#cat luci-app-daed/daed/Makefile
-#修复libubox报错
-#sed -i '/include $(INCLUDE_DIR)\/cmake.mk/a PKG_BUILD_FLAGS:=no-werror' ../package/libs/libubox/Makefile
-#sed -i 's|TARGET_CFLAGS += -I$(STAGING_DIR)/usr/include|& -Wno-error=format-nonliteral -Wno-format-nonliteral|' ../package/libs/libubox/Makefile
-#cat ../package/libs/libubox/Makefile
