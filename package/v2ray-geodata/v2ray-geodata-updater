@@ -57,6 +57,8 @@ GEOSITE_SHA256SUM_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/
 GEOIP_PATH=/usr/share/daed/geoip.dat
 GEOSITE_PATH=/usr/share/daed/geosite.dat
 
+mkdir -p /usr/share/daed
+
 cd /tmp
 update_success=false
 log "downloading geoip.dat..."
@@ -78,16 +80,18 @@ else
   log "failed to download latest geosite.dat, not updating!"
 fi
 
-#重启dead 或者dae
+# 兼容 daed / dae 两种服务名
 if [ "$update_success" = true ]; then
-  if /etc/init.d/daed running; then
+  if [ -x /etc/init.d/daed ] && /etc/init.d/daed running; then
     log "daed is reloading"
     /etc/init.d/daed restart
     log "daed has reloaded"
-  elif /etc/init.d/dae running; then
+  elif [ -x /etc/init.d/dae ] && /etc/init.d/dae running; then
     log "dae is reloading"
     /etc/init.d/dae restart
     log "dae has reloaded"
+  else
+    log "No daed/dae service is running, skip reload"
   fi
 fi
 
