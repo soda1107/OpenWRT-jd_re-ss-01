@@ -132,10 +132,7 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "sing-box"
 #UPDATE_VERSION "tailscale"
 
-
-
 #删除官方的默认插件
-
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/{v2ray-geodata}
 cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./

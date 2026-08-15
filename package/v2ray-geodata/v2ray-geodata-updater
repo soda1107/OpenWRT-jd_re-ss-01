@@ -7,11 +7,10 @@ log () {
   logger -t $LOGGER_TAG "$@"
 }
 
-# 定义代理源数组
 proxies="
+https://cdn.akaere.online
 https://gh-proxy.com
 https://www.gitwarp.com
-https://cdn.akaere.online
 "
 
 # 定义下载函数
@@ -54,10 +53,10 @@ GEOIP_SHA256SUM_URL="https://github.com/Loyalsoldier/geoip/releases/latest/downl
 GEOSITE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 GEOSITE_SHA256SUM_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat.sha256sum"
 
-GEOIP_PATH=/usr/share/daed/geoip.dat
-GEOSITE_PATH=/usr/share/daed/geosite.dat
+GEOIP_PATH=/usr/share/dae/geoip.dat
+GEOSITE_PATH=/usr/share/dae/geosite.dat
 
-mkdir -p /usr/share/daed
+mkdir -p /usr/share/dae
 
 cd /tmp
 update_success=false
