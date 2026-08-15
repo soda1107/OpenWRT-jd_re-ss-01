@@ -9,10 +9,9 @@ log () {
 
 # 定义代理源数组
 proxies="
-https://ghproxy.cfd
-https://ghps.cc
-https://ghfast.top
-https://hub.gitmirror.com
+https://gh-proxy.com
+https://www.gitwarp.com
+https://cdn.akaere.online
 "
 
 # 定义下载函数
