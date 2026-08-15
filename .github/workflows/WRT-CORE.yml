@@ -183,9 +183,9 @@ jobs:
         with:
           ccache: true
           toolchain: true
-          skip: true
+          skip: false
           clean: false
-          mixkey: ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}
+          mixkey: ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-${{ hashFiles('Config/*.txt', 'Scripts/*.sh', 'package/**') }}
           prefix: ${{ github.workspace }}/wrt
 
 
