@@ -53,10 +53,10 @@ GEOIP_SHA256SUM_URL="https://github.com/Loyalsoldier/geoip/releases/latest/downl
 GEOSITE_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat"
 GEOSITE_SHA256SUM_URL="https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat.sha256sum"
 
-GEOIP_PATH=/usr/share/dae/geoip.dat
-GEOSITE_PATH=/usr/share/dae/geosite.dat
+GEOIP_PATH=/usr/share/v2ray/geoip.dat
+GEOSITE_PATH=/usr/share/v2ray/geosite.dat
 
-mkdir -p /usr/share/dae
+mkdir -p /usr/share/v2ray
 
 cd /tmp
 update_success=false

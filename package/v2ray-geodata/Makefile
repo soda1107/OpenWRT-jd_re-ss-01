@@ -58,13 +58,13 @@ define Build/Compile
 endef
 
 define Package/v2ray-geoip/install
-	$(INSTALL_DIR) $(1)/usr/share/dae
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/geoip.dat $(1)/usr/share/dae/geoip.dat
+	$(INSTALL_DIR) $(1)/usr/share/v2ray
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/geoip.dat $(1)/usr/share/v2ray/geoip.dat
 endef
 
 define Package/v2ray-geosite/install
-	$(INSTALL_DIR) $(1)/usr/share/dae
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/geosite.dat $(1)/usr/share/dae/geosite.dat
+	$(INSTALL_DIR) $(1)/usr/share/v2ray
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/geosite.dat $(1)/usr/share/v2ray/geosite.dat
 endef
 
 define Package/v2ray-geodata-updater/install
