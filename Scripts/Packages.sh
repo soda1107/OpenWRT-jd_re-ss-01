@@ -84,6 +84,7 @@ UPDATE_PACKAGE "luci-app-dae" "QiuSimons/luci-app-dae" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
 UPDATE_PACKAGE "luci-app-bandix" "timsaya/luci-app-bandix" "main"
+UPDATE_PACKAGE "bandix" "timsaya/bandix" "main"
 #更新软件包版本
 UPDATE_VERSION() {
 	local PKG_NAME=$1
