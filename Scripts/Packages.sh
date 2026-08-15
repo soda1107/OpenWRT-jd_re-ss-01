@@ -83,6 +83,8 @@ UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-dae" "QiuSimons/luci-app-dae" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
+UPDATE_PACKAGE "bandix" "timsaya/openwrt-bandix" "main" "pkg"
+UPDATE_PACKAGE "luci-app-bandix" "timsaya/luci-app-bandix" "main"
 #更新软件包版本
 UPDATE_VERSION() {
 	local PKG_NAME=$1
@@ -131,11 +133,17 @@ UPDATE_VERSION() {
 
 
 #删除官方的默认插件
-#删除官方的默认插件
+
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/{v2ray-geodata}
 cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 
+#fix bandix directory structure
+if [ -d "./package/bandix/openwrt-bandix" ]; then
+    mv -f ./package/bandix/openwrt-bandix/* ./package/bandix/
+    rmdir ./package/bandix/openwrt-bandix
+    echo "Fixed bandix directory structure"
+fi
 
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
