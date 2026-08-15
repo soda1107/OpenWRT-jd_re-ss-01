@@ -83,7 +83,9 @@ UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-dae" "QiuSimons/luci-app-dae" "kix"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
-UPDATE_PACKAGE "bandix" "timsaya/openwrt-bandix" "main" "pkg"
+#bandix 仓库内层目录与仓库同名(openwrt-bandix/openwrt-bandix)，
+#不能使用 "pkg"(cp 目标与克隆目录冲突后 rm 会删光整个包)，改用 "name" 再展平目录
+UPDATE_PACKAGE "bandix" "timsaya/openwrt-bandix" "main" "name"
 UPDATE_PACKAGE "luci-app-bandix" "timsaya/luci-app-bandix" "main"
 #更新软件包版本
 UPDATE_VERSION() {
@@ -139,10 +141,18 @@ rm -rf ../feeds/packages/net/{v2ray-geodata}
 cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 
 #fix bandix directory structure
-if [ -d "./package/bandix/openwrt-bandix" ]; then
-    mv -f ./package/bandix/openwrt-bandix/* ./package/bandix/
-    rmdir ./package/bandix/openwrt-bandix
+#(本脚本在 wrt/package/ 目录下运行，路径不能带 package/ 前缀)
+if [ -d "./bandix/openwrt-bandix" ]; then
+    mv -f ./bandix/openwrt-bandix/* ./bandix/
+    rmdir ./bandix/openwrt-bandix
     echo "Fixed bandix directory structure"
+fi
+
+#fix luci-app-bandix directory structure(仓库内层同样嵌套了一层同名目录)
+if [ -d "./luci-app-bandix/luci-app-bandix" ]; then
+    mv -f ./luci-app-bandix/luci-app-bandix/* ./luci-app-bandix/
+    rmdir ./luci-app-bandix/luci-app-bandix
+    echo "Fixed luci-app-bandix directory structure"
 fi
 
 #修复daed/Makefile
