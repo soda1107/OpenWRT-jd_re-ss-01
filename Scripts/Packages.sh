@@ -134,12 +134,8 @@ UPDATE_VERSION() {
 
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
-#彻底移除 feeds 版 v2ray-geodata：既要删源码目录(../feeds/...)，也要删 package/feeds/ 下的符号链接。
-#若符号链接残留(即使是悬空/有效)，扫描仍会注册 feeds 版并覆盖自定义版，导致
-#v2ray-geodata-updater 这个子包根本不会进 .config / 固件。
 rm -rf ../feeds/packages/net/v2ray-geodata
 rm -rf ./feeds/packages/net/v2ray-geodata
-#先清掉已存在的自定义目录，避免 cp -r 复制成 v2ray-geodata/v2ray-geodata 嵌套
 rm -rf ./v2ray-geodata
 cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 

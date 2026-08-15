@@ -163,10 +163,6 @@ jobs:
           $GITHUB_WORKSPACE/Scripts/Handles.sh
         #  $GITHUB_WORKSPACE/Scripts/FixDaedInit.sh
 
-      #- name: Remove broken kernel patches
-      #  run: |
-      #    rm -f wrt/target/linux/generic/pending-6.12/712-net-dsa-qca8k-enable-assisted-learning-on-CPU-port.patch
-         
       - name: Custom Settings
         run: |
           . $GITHUB_WORKSPACE/Scripts/function.sh
@@ -178,18 +174,38 @@ jobs:
 
           make defconfig -j$(nproc) 
 
-      - name: Cache Wrt Build
+      - name: Cache Wrt Build - 工具链（dl + ccache + host/toolchain，稳定 key 只随源码 commit 变，改包/脚本不失效）
         uses: actions/cache@v4
         with:
           path: |
             wrt/dl/
-            wrt/staging_dir/
-            wrt/build_dir/
             wrt/.ccache/
+            wrt/staging_dir/host/
+            wrt/staging_dir/toolchain-*/
+          key: toolchain-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_HASH }}
+          restore-keys: |
+            toolchain-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-
+
+      - name: Cache Wrt Build - 目标包（staging_dir/target-* + build_dir，随本地代码 hash 失效）
+        uses: actions/cache@v4
+        with:
+          path: |
+            wrt/staging_dir/target-*/
+            wrt/build_dir/
           key: ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-${{ hashFiles('Config/*.txt', 'Scripts/*.sh', 'package/**') }}
           restore-keys: |
             ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-
             ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-
+
+      - name: Refresh 工具链 stamp（仅 host/toolchain，排除 target-*，让恢复的工具链被直接复用）
+        run: |
+          if [ -d "./wrt/staging_dir" ]; then
+            find "./wrt/staging_dir" -mindepth 1 -maxdepth 1 -type d ! -name "target-*" | while read -r dir; do
+                find "$dir" -type d -name "stamp" | while read -r s; do
+                    find "$s" -type f -exec touch {} +
+                done
+            done
+          fi
 
 
       - name: Download Packages
