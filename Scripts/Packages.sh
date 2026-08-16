@@ -136,23 +136,10 @@ UPDATE_VERSION() {
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/v2ray-geodata
 rm -rf ./feeds/packages/net/v2ray-geodata
+rm -rf ./feeds/packages/v2ray-geodata
 rm -rf ./v2ray-geodata
 cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 
-#fix bandix directory structure
-#(本脚本在 wrt/package/ 目录下运行，路径不能带 package/ 前缀)
-if [ -d "./bandix/openwrt-bandix" ]; then
-    mv -f ./bandix/openwrt-bandix/* ./bandix/
-    rmdir ./bandix/openwrt-bandix
-    echo "Fixed bandix directory structure"
-fi
-
-#fix luci-app-bandix directory structure(仓库内层同样嵌套了一层同名目录)
-if [ -d "./luci-app-bandix/luci-app-bandix" ]; then
-    mv -f ./luci-app-bandix/luci-app-bandix/* ./luci-app-bandix/
-    rmdir ./luci-app-bandix/luci-app-bandix
-    echo "Fixed luci-app-bandix directory structure"
-fi
 
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
