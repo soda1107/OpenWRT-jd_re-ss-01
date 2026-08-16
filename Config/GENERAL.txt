@@ -142,6 +142,9 @@ CONFIG_DEFAULT_tcp_cubic=y
 CONFIG_PACKAGE_v2ray-geoip=y
 CONFIG_PACKAGE_v2ray-geosite=y
 CONFIG_PACKAGE_v2ray-geodata-updater=y
+#dae 2.0.0+ 将 /usr/share/dae 符号链接拆到子包 dae-geoip/dae-geosite（非自动依赖），必须显式启用，否则 dae FATAL: geosite.dat not exist
+CONFIG_PACKAGE_dae-geoip=y
+CONFIG_PACKAGE_dae-geosite=y
 CONFIG_PACKAGE_tcpdump=y
 CONFIG_PACKAGE_block-mount=y
 CONFIG_PACKAGE_btop=y
