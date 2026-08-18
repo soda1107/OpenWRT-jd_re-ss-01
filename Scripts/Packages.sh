@@ -140,6 +140,18 @@ rm -rf ./v2ray-geodata
 cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 
 
+#修复 ipq60xx 6.18 DTS 回归：剔除引用了已删除 swport5 标签的 TP-Link EAP 机型
+#（上游 VIKINGYFY/immortalwrt main 切 6.18 后 eap6xx 系列 DTS 编译报 "Label or path swport5 not found"，
+#  本仓库只需 jdcloud_re-ss-01，直接把这些机型从 TARGET_DEVICES 里删掉，彻底免疫）
+for DEV in tplink_eap610-outdoor tplink_eap623-outdoor-hd-v1 tplink_eap625-outdoor-hd-v1 tplink_eap620-hd-v2 tplink_eap620-hd-v3; do
+  if sed -i "/^TARGET_DEVICES += $DEV\$/d" ../target/linux/qualcommax/image/ipq60xx.mk 2>/dev/null; then
+    echo "Removed broken device: $DEV"
+  else
+    echo "ipq60xx.mk not found or $DEV not present, skip"
+  fi
+done
+
+
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
 #sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
