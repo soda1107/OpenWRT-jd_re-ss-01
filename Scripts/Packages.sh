@@ -84,8 +84,6 @@ UPDATE_PACKAGE "luci-app-dae" "QiuSimons/luci-app-dae" "kix"
 UPDATE_PACKAGE "luci-app-honk" "QiuSimons/luci-app-honk" "master"
 UPDATE_PACKAGE "luci-app-pushbot" "zzsj0928/luci-app-pushbot" "master"
 UPDATE_PACKAGE "luci-app-lucky" "sirpdboy/luci-app-lucky" "main"
-#bandix 仓库内层目录与仓库同名(openwrt-bandix/openwrt-bandix)，
-#不能使用 "pkg"(cp 目标与克隆目录冲突后 rm 会删光整个包)，改用 "name" 再展平目录
 UPDATE_PACKAGE "bandix" "timsaya/openwrt-bandix" "main" "name"
 UPDATE_PACKAGE "luci-app-bandix" "timsaya/luci-app-bandix" "main"
 #更新软件包版本
@@ -144,5 +142,5 @@ cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 
 #修复daed/Makefile
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
-sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
+#sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
 #sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed

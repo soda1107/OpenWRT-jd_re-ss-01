@@ -1,5 +1,8 @@
 CONFIG_TARGET_qualcommax=y
 CONFIG_TARGET_qualcommax_ipq60xx=y
+# 仅构建下面显式选中的设备，关闭 Default Profile（全设备）：
+# 上游 ipq60xx 6.18 的 EAP620/EAP625 DTS 有回归（swport5 标签丢失），全量编译必失败
+# CONFIG_TARGET_qualcommax_ipq60xx_Default is not set
 
 #设备列表
 #CONFIG_TARGET_DEVICE_qualcommax_ipq60xx_DEVICE_cmiot_ax18=y
