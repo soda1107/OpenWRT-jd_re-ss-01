@@ -141,7 +141,13 @@ EOF
 function generate_config() {
   config_file=".config"
   #如配置文件已存在
-  cat $GITHUB_WORKSPACE/Config/${WRT_CONFIG}.txt $GITHUB_WORKSPACE/Config/GENERAL.txt  > $config_file
+  cat $GITHUB_WORKSPACE/Config/${WRT_CONFIG}.txt > $config_file
+
+  #TEST 配置只做单文件快速校验，不追加 GENERAL.txt
+  if [[ "${WRT_CONFIG,,}" != *"test"* ]]; then
+    cat $GITHUB_WORKSPACE/Config/GENERAL.txt >> $config_file
+  fi
+
   local target=$(echo $WRT_ARCH | cut -d'_' -f2)
 
   #删除wifi依赖

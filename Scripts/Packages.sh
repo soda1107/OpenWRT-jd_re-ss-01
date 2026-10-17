@@ -141,3 +141,10 @@ cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 #rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
 #sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
 #sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
+
+#引入私有扩展脚本，文件不存在时自动跳过
+if [ -f "$GITHUB_WORKSPACE/Scripts/PRIVATE.sh" ]; then
+	echo " "
+	echo "Applying private packages from PRIVATE.sh..."
+	source "$GITHUB_WORKSPACE/Scripts/PRIVATE.sh"
+fi

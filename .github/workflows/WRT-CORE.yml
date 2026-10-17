@@ -140,6 +140,12 @@ jobs:
         run: |
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
 
+          #剔除源码树内置的国内镜像源，避免个别镜像异常时拖慢或打断 downloads
+          PROJECT_MIRRORS_FILE="./wrt/scripts/projectsmirrors.json"
+          if [ -f "$PROJECT_MIRRORS_FILE" ]; then
+            sed -i '/\.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
+          fi
+
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
 
       - name: Check Scripts
@@ -175,6 +181,7 @@ jobs:
           make defconfig -j$(nproc) 
 
       - name: Cache Wrt Build - 工具链（dl + ccache + host/toolchain，稳定 key 只随源码 commit 变，改包/脚本不失效）
+        id: cache-toolchain
         uses: actions/cache@v4
         with:
           path: |
@@ -187,6 +194,7 @@ jobs:
             toolchain-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-
 
       - name: Cache Wrt Build - 目标包（staging_dir/target-* + build_dir，随本地代码 hash 失效）
+        id: cache-target
         uses: actions/cache@v4
         with:
           path: |
@@ -222,6 +230,23 @@ jobs:
 
           make -j$(nproc) || make -j1 V=s
 
+      - name: Prune Stale Caches
+        #只在“本次已成功编译、并且确实要写入新缓存”时清理，编译失败时保留旧缓存
+        if: ${{ success() && env.WRT_TEST != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' }}
+        run: |
+          #两个 key 里分别含 WRT_HASH（每天随源码变）与 hashFiles(...)，不清理会很快吃满仓库
+          #10GB 配额，反而把 ccache / 工具链挤掉；这里保证每个前缀只保留即将写入的这一份。
+          for PREFIX in \
+            "toolchain-$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-" \
+            "$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-" ; do
+            echo "== prune caches with prefix: $PREFIX =="
+            gh cache list --key "$PREFIX" --limit 100 --json id,key --jq '.[] | "\(.id)\t\(.key)"' \
+              | while IFS=$'\t' read -r ID KEY; do
+                  [ -n "$ID" ] || continue
+                  echo "delete cache: $KEY ($ID)"
+                  gh cache delete "$ID" || true
+                done
+          done
 
       - name: Machine Information
         run: |

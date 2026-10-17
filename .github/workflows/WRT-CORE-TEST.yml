@@ -95,5 +95,23 @@ jobs:
         run: |
           . $GITHUB_WORKSPACE/Scripts/function.sh
           cd ./wrt/    
-          generate_config && cat .config
+          generate_config
+
+          #裸 runner 上做一次 defconfig，把“不存在的包/未满足的依赖”暴露出来
+          make defconfig -j$(nproc) || echo "::warning::make defconfig 未能完成，下面展示的是未归一化的合并结果"
+          cat .config
+
+      - name: Verify Config Symbols
+        run: |
+          cd ./wrt/
+          MISSING=0
+          for f in "$GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt" "$GITHUB_WORKSPACE/Config/GENERAL.txt"; do
+            [ -f "$f" ] || continue
+            while read -r SYM; do
+              grep -qxF "$SYM" .config && continue
+              echo "::warning file=$(basename "$f")::$SYM 未出现在最终 .config 中（该包在本源码树可能不存在，或依赖未满足）"
+              MISSING=$((MISSING+1))
+            done < <(grep -oE '^CONFIG_[A-Za-z0-9_]+=y' "$f")
+          done
+          echo "== 共 $MISSING 个 =y 选项未生效（仅提示，不判定失败）=="
      

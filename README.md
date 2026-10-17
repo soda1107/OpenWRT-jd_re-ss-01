@@ -28,3 +28,29 @@ workflows——自定义CI配置
 Scripts——自定义脚本
 
 Config——自定义配置
+
+# 工具与 U-BOOT：
+
+本地编译器（WSL/虚拟机里跑同一套脚本）：
+
+https://github.com/VIKINGYFY/OWRT-Tools.git
+
+自用修改版插件（Packages.sh 里的 viking 包即来自此仓库）：
+
+https://github.com/VIKINGYFY/packages.git
+
+高通版 U-BOOT——沉心：
+
+https://github.com/chenxin527/uboot-qsdk12.5-build.git
+
+高通版 U-BOOT——小猪：
+
+https://github.com/1980490718/u-boot-2016.git
+
+联发科 U-BOOT——全新版：
+
+https://github.com/VIKINGYFY/UBOOT-CI/releases
+
+联发科 U-BOOT——官方版：
+
+https://drive.wrt.moe/uboot/mediatek
