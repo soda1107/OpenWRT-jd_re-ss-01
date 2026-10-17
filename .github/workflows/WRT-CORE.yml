@@ -231,22 +231,29 @@ jobs:
           make -j$(nproc) || make -j1 V=s
 
       - name: Prune Stale Caches
-        #只在“本次已成功编译、并且确实要写入新缓存”时清理，编译失败时保留旧缓存
-        if: ${{ success() && env.WRT_TEST != 'true' && steps.cache-toolchain.outputs.cache-hit != 'true' }}
+        #只在“本次已成功编译”时清理，编译失败时保留旧缓存
+        #两类缓存分别判断：命中的那份正在被复用，绝不能删，只有本次会重新写入的才清理
+        if: ${{ success() && env.WRT_TEST != 'true' && (steps.cache-toolchain.outputs.cache-hit != 'true' || steps.cache-target.outputs.cache-hit != 'true') }}
+        env:
+          TC_HIT: ${{ steps.cache-toolchain.outputs.cache-hit }}
+          TG_HIT: ${{ steps.cache-target.outputs.cache-hit }}
         run: |
-          #两个 key 里分别含 WRT_HASH（每天随源码变）与 hashFiles(...)，不清理会很快吃满仓库
-          #10GB 配额，反而把 ccache / 工具链挤掉；这里保证每个前缀只保留即将写入的这一份。
-          for PREFIX in \
-            "toolchain-$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-" \
-            "$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-" ; do
-            echo "== prune caches with prefix: $PREFIX =="
-            gh cache list --key "$PREFIX" --limit 100 --json id,key --jq '.[] | "\(.id)\t\(.key)"' \
+          #两个 key 里分别含 WRT_HASH（每天随源码变）与 hashFiles(Config,Scripts,package)，
+          #不清理会很快吃满仓库 10GB 配额，反而把 ccache / 工具链挤掉。
+          #目标包缓存的前缀必须带 WRT_CONFIG：同 arch/target/branch 的兄弟配置
+          #（如 IPQ60XX-NOWIFI 与 IPQ60XX-WIFI）在矩阵里是并行跑的，前缀只到 BRANCH 会互相删缓存。
+          prune() {
+            echo "== prune caches with prefix: $1 =="
+            gh cache list --key "$1" --limit 100 --json id,key --jq '.[] | "\(.id)\t\(.key)"' \
               | while IFS=$'\t' read -r ID KEY; do
                   [ -n "$ID" ] || continue
                   echo "delete cache: $KEY ($ID)"
                   gh cache delete "$ID" || true
                 done
-          done
+          }
+
+          [ "$TC_HIT" = 'true' ] || prune "toolchain-$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-"
+          [ "$TG_HIT" = 'true' ] || prune "$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-$WRT_CONFIG-"
 
       - name: Machine Information
         run: |

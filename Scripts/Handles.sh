@@ -60,3 +60,30 @@ fi
 #修复Rust编译失败
 FIX "rust" "$FEEDS_PATH/packages/lang/rust" sed -i 's/ci-llvm=true/ci-llvm=false/g' \
 	"$FEEDS_PATH/packages/lang/rust/Makefile"
+
+#修复miniupnpd的失效补丁
+MINIUPNPD_DIR="$FEEDS_PATH/packages/net/miniupnpd"
+MINIUPNPD_MK="$MINIUPNPD_DIR/Makefile"
+#已知坏快照：immortalwrt/packages 2026-10-16 的 "Merge Official Source" 把 miniupnpd 2.3.11
+#合了进来，却把 openwrt 早已删掉的旧补丁又带了回来。这些补丁对应的代码 2.3.11 已经自带
+#（已核对 upnppermissions.c 里 iseol / get_sep / get_addr 与 const char * 签名全在），
+#重打必然 Hunk FAILED，整个 world 编译直接中断。openwrt/packages 在 2.3.11 上已不带任何
+#补丁，这里对齐它的状态。
+#用补丁指纹做守卫：上游一旦真正修好（补丁内容变了），指纹对不上就自动跳过，不会误删。
+MINIUPNPD_BAD_020_SHA="4e0f8ddf58cb130044a5f3b92bdf3a8859f8c15e0edbcbcb2b8df42f99e41da1"
+if [ -f "$MINIUPNPD_MK" ] && [ -f "$MINIUPNPD_DIR/patches/020-descr-filter-fix.patch" ]; then
+	echo " "
+	MUPNP_VER="$(sed -n 's/^PKG_VERSION:=//p' "$MINIUPNPD_MK" | head -n 1 | tr -d '\r[:space:]')"
+	if command -v sha256sum >/dev/null 2>&1; then
+		MUPNP_SHA="$(sha256sum "$MINIUPNPD_DIR/patches/020-descr-filter-fix.patch" | cut -d' ' -f1)"
+	else
+		MUPNP_SHA="$(shasum -a 256 "$MINIUPNPD_DIR/patches/020-descr-filter-fix.patch" | cut -d' ' -f1)"
+	fi
+	if [ "$MUPNP_SHA" = "$MINIUPNPD_BAD_020_SHA" ] && [ -n "$MUPNP_VER" ] &&
+		[ "$(printf '%s\n' "2.3.11" "$MUPNP_VER" | sort -V | head -n 1)" = "2.3.11" ]; then
+		rm -rf "$MINIUPNPD_DIR/patches"
+		echo "miniupnpd $MUPNP_VER: dropped stale patches (already merged upstream)!"
+	else
+		echo "miniupnpd ${MUPNP_VER:-unknown}: patches kept as is"
+	fi
+fi
