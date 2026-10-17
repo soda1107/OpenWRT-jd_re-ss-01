@@ -1,0 +1,77 @@
+# SPDX-License-Identifier: MIT
+# 手动触发的配置校验入口：只生成并检查 .config，不安装编译环境、不编译固件
+name: WRT-TEST
+
+on:
+  #手动编译
+  workflow_dispatch:
+    inputs:
+      CONFIG:
+        description: '要校验的 Config 文件名（不含 .txt）'
+        default: 'IPQ60XX-NOWIFI'
+        required: true
+        type: choice
+        options:
+          - IPQ60XX-NOWIFI
+          - IPQ60XX-WIFI
+          - IPQ807X-NOWIFI
+          - IPQ807X-WIFI
+          - MEDIATEK
+          - ROCKCHIP
+          - X86
+      SOURCE:
+        description: '源码仓库'
+        default: 'VIKINGYFY/immortalwrt'
+        required: true
+        type: choice
+        options:
+          - VIKINGYFY/immortalwrt
+          - LiBwrt/openwrt-6.x
+          - immortalwrt/immortalwrt
+          - qosmio/openwrt-ipq
+      BRANCH:
+        description: '源码分支'
+        default: 'main'
+        required: true
+        type: string
+      PACKAGE:
+        description: '追加插件（可选，每行一个 CONFIG_...）'
+        required: false
+        type: string
+
+#CI权限
+permissions: write-all
+
+#CI任务
+jobs:
+  config:
+    name: ${{inputs.CONFIG}}
+    #调用只做配置校验的核心
+    uses: ./.github/workflows/WRT-CORE-TEST.yml
+    with:
+      #编译配置
+      WRT_CONFIG: ${{inputs.CONFIG}}
+      #默认主题
+      WRT_THEME: argon
+      #默认主机名
+      WRT_NAME: OWRT
+      #默认WIFI名称
+      WRT_SSID: OWRT
+      #默认WIFI密码
+      WRT_WORD: 12345678
+      #默认地址
+      WRT_IP: 192.168.10.1
+      #默认密码，仅作提示，修改无用
+      WRT_PW: 无
+      #源码链接
+      WRT_REPO: https://github.com/${{inputs.SOURCE}}.git
+      #源码分支
+      WRT_BRANCH: ${{inputs.BRANCH}}
+      #源码名称
+      WRT_SOURCE: ${{inputs.SOURCE}}
+      #插件调整
+      WRT_PACKAGE: ${{inputs.PACKAGE}}
+      #仅输出配置文件
+      WRT_TEST: 'true'
+      #带上分支名，function.sh 里 6.12 内核的 usb-net 守卫依赖它
+      CI_NAME: WRT-TEST-${{inputs.BRANCH}}
