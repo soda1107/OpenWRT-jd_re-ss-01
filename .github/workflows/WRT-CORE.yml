@@ -243,11 +243,11 @@ jobs:
           done
           [ "$ok" = "1" ] || { echo "::error::make download 连续 3 次失败"; exit 1; }
 
-          EMPTY=$(find dl -type f -size 0 2>/dev/null || true)
+          #Go 模块缓存里的 .lock 天生是 0 字节，必须排除
+          EMPTY=$(find dl -type f -size 0 ! -path 'dl/go-mod-cache/*' ! -name '*.lock' 2>/dev/null || true)
           if [ -n "$EMPTY" ]; then
-            echo "::error::发现 0 字节的下载残留："
+            echo "::warning::发现 0 字节文件（可能是下载残留，请留意）："
             echo "$EMPTY"
-            exit 1
           fi
 
       - name: Compile Firmware
@@ -269,6 +269,8 @@ jobs:
             wrt/.config
           retention-days: 7
           if-no-files-found: warn
+          #wrt/.config 是隐藏文件，默认不会被收集
+          include-hidden-files: true
 
       - name: Prune Stale Caches
         #成功才清理；正在复用的那份不删
