@@ -69,7 +69,7 @@ jobs:
       WRT_SOURCE: ${{matrix.SOURCE}}
       #插件调整
       WRT_PACKAGE: ${{inputs.PACKAGE}}
-      #仅输出配置文件
-      WRT_TEST: ${{inputs.TEST}}
+      #workflow_run 触发时 inputs 为空，必须显式转布尔，否则传 '' 会报 Unexpected value
+      WRT_TEST: ${{inputs.TEST == true}}
 
       CI_NAME: ${{github.workflow}}

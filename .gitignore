@@ -1,3 +1,6 @@
+*.md
+!README.md
+
 /wrt
 /.idea
 /Config/PRIVATE.txt
