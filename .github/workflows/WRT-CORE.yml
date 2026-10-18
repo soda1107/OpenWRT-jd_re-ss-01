@@ -39,15 +39,20 @@ on:
         type: string
       WRT_TEST:
         required: false
-        type: string
+        type: boolean
+        default: false
       CI_NAME:
         required: false
         type: string
       WRT_ARCH:
         required: false
         type: string
+
+permissions:
+  contents: write
+  actions: write
+
 env:
-  GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
   WRT_CONFIG: ${{inputs.WRT_CONFIG}}
   WRT_THEME: ${{inputs.WRT_THEME}}
   WRT_NAME: ${{inputs.WRT_NAME}}
@@ -67,6 +72,7 @@ jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
     runs-on: ubuntu-latest
+    timeout-minutes: 330
     steps:
       - name: Install BC
         env:
@@ -88,7 +94,7 @@ jobs:
           testing: false
 
       - name: Checkout Projects
-        uses: actions/checkout@main
+        uses: actions/checkout@v7
       - name: Initialization Environment
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -104,21 +110,16 @@ jobs:
           sudo bash "$GITHUB_WORKSPACE/Scripts/init_build_environment.sh"
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-          if command -v go >/dev/null 2>&1; then
-            echo "GO_INSTALLED=true" >> "$GITHUB_ENV"
-          else
-            echo "GO_INSTALLED=false" >> "$GITHUB_ENV"
-          fi
 #          sudo chown $USER:$GROUPS $GITHUB_WORKSPACE
 #          sudo mkdir -p /mnt/build_wrt
 #          sudo chown $USER:$USER /mnt/build_wrt
 #          sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
 
       - name: Setup Go
-        if: env.GO_INSTALLED != 'true'
         uses: actions/setup-go@v6
         with:
           go-version: '1.26'
+          cache: false
       - run: go version
 
       - name: Initialization Values
@@ -130,7 +131,6 @@ jobs:
           echo "WRT_KVER=none" >> $GITHUB_ENV
           echo "WRT_LIST=none" >> $GITHUB_ENV
 
-          echo "WRT_CI=$WRT_CI" >> $GITHUB_ENV
           [[ -z $WRT_ARCH ]] && {
             export WRT_ARCH=$(sed -n 's/.*_DEVICE_\(.*\)_DEVICE_.*/\1/p' $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt | head -n 1)
             echo "WRT_ARCH=$WRT_ARCH" >> $GITHUB_ENV
@@ -152,14 +152,11 @@ jobs:
         run: |
           find ./ -maxdepth 3 -type f -iregex ".*\(txt\|sh\)$" -exec dos2unix {} \; -exec chmod +x {} \;
 
-
-
-
       - name: Update Feeds
         run: |
           cd ./wrt/
           ./scripts/feeds update -a
-          ./scripts/feeds install -a 
+          ./scripts/feeds install -a
 
       - name: Custom Packages
         run: |
@@ -173,37 +170,56 @@ jobs:
         run: |
           . $GITHUB_WORKSPACE/Scripts/function.sh
           cd ./wrt/
-          
+
           generate_config && cat .config
-          
+
           $GITHUB_WORKSPACE/Scripts/Settings.sh
 
-          make defconfig -j$(nproc) 
+          make defconfig -j$(nproc)
 
-      - name: Cache Wrt Build - 工具链（dl + ccache + host/toolchain，稳定 key 只随源码 commit 变，改包/脚本不失效）
-        id: cache-toolchain
+          bash $GITHUB_WORKSPACE/Scripts/AssertConfig.sh
+
+      - name: Cache Wrt Build - 下载缓存（dl，与 commit 无关）
+        id: cache-dl
         uses: actions/cache@v4
         with:
           path: |
             wrt/dl/
+          key: dl-${{ env.WRT_ARCH }}-${{ hashFiles('Config/*.txt', 'Scripts/Packages.sh') }}
+          restore-keys: |
+            dl-${{ env.WRT_ARCH }}-
+
+      - name: Cache Wrt Build - 编译器缓存（ccache，滚动 key）
+        id: cache-ccache
+        uses: actions/cache@v4
+        with:
+          path: |
             wrt/.ccache/
+          key: ccache-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ccache-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-
+
+      - name: Cache Wrt Build - 工具链（host/toolchain，随源码 commit 变）
+        id: cache-toolchain
+        uses: actions/cache@v4
+        with:
+          path: |
             wrt/staging_dir/host/
             wrt/staging_dir/toolchain-*/
           key: toolchain-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_HASH }}
           restore-keys: |
             toolchain-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-
 
-      - name: Cache Wrt Build - 目标包（staging_dir/target-* + build_dir，随本地代码 hash 失效）
+      - name: Cache Wrt Build - 目标包（staging/target + build_dir/target，随配置变）
         id: cache-target
         uses: actions/cache@v4
         with:
           path: |
             wrt/staging_dir/target-*/
-            wrt/build_dir/
+            wrt/build_dir/target-*/
           key: ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-${{ hashFiles('Config/*.txt', 'Scripts/*.sh', 'package/**') }}
           restore-keys: |
             ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-
-            ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-
 
       - name: Refresh 工具链 stamp（仅 host/toolchain，排除 target-*，让恢复的工具链被直接复用）
         run: |
@@ -215,33 +231,55 @@ jobs:
             done
           fi
 
-
       - name: Download Packages
         if: env.WRT_TEST != 'true'
         run: |
           cd ./wrt/
 
-          make download -j$(nproc)
+          ok=0
+          for i in 1 2 3; do
+            if make download -j$(nproc); then ok=1; break; fi
+            echo "::warning::make download 第 $i 次失败，10 秒后重试"
+            sleep 10
+          done
+          [ "$ok" = "1" ] || { echo "::error::make download 连续 3 次失败"; exit 1; }
+
+          EMPTY=$(find dl -type f -size 0 2>/dev/null || true)
+          if [ -n "$EMPTY" ]; then
+            echo "::error::发现 0 字节的下载残留："
+            echo "$EMPTY"
+            exit 1
+          fi
 
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |
           cd ./wrt/
 
-          make -j$(nproc) || make -j1 V=s
+          set -o pipefail
+          make -j$(nproc) 2>&1 | tee ../build.log
+
+      - name: Upload Build Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ env.WRT_CONFIG }}-${{ env.WRT_DATE }}
+          path: |
+            build.log
+            wrt/logs/
+            wrt/.config
+          retention-days: 7
+          if-no-files-found: warn
 
       - name: Prune Stale Caches
-        #只在“本次已成功编译”时清理，编译失败时保留旧缓存
-        #两类缓存分别判断：命中的那份正在被复用，绝不能删，只有本次会重新写入的才清理
-        if: ${{ success() && env.WRT_TEST != 'true' && (steps.cache-toolchain.outputs.cache-hit != 'true' || steps.cache-target.outputs.cache-hit != 'true') }}
+        #成功才清理；正在复用的那份不删
+        if: ${{ success() && env.WRT_TEST != 'true' }}
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DL_HIT: ${{ steps.cache-dl.outputs.cache-hit }}
           TC_HIT: ${{ steps.cache-toolchain.outputs.cache-hit }}
           TG_HIT: ${{ steps.cache-target.outputs.cache-hit }}
         run: |
-          #两个 key 里分别含 WRT_HASH（每天随源码变）与 hashFiles(Config,Scripts,package)，
-          #不清理会很快吃满仓库 10GB 配额，反而把 ccache / 工具链挤掉。
-          #目标包缓存的前缀必须带 WRT_CONFIG：同 arch/target/branch 的兄弟配置
-          #（如 IPQ60XX-NOWIFI 与 IPQ60XX-WIFI）在矩阵里是并行跑的，前缀只到 BRANCH 会互相删缓存。
           prune() {
             echo "== prune caches with prefix: $1 =="
             gh cache list --key "$1" --limit 100 --json id,key --jq '.[] | "\(.id)\t\(.key)"' \
@@ -252,6 +290,8 @@ jobs:
                 done
           }
 
+          [ "$DL_HIT" = 'true' ] || prune "dl-$WRT_ARCH-"
+          prune "ccache-$WRT_ARCH-$WRT_TARGET-"
           [ "$TC_HIT" = 'true' ] || prune "toolchain-$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-"
           [ "$TG_HIT" = 'true' ] || prune "$WRT_ARCH-$WRT_TARGET-$WRT_BRANCH-$WRT_CONFIG-"
 
@@ -266,12 +306,29 @@ jobs:
           echo "======================="
           du -h --max-depth=1
           echo "======================="
+          echo "=== cache sizes ==="
+          du -sh ./dl ./.ccache ./staging_dir ./build_dir 2>/dev/null || true
+          echo "=== ccache stats ==="
+          ccache -s 2>/dev/null | head -20 || true
 
       - name: Package Firmware
         run: |
-          cd ./wrt/ && mkdir ./upload/
+          cd ./wrt/ && mkdir -p ./upload/
 
           cp -f ./.config ./upload/Config-"$WRT_CONFIG"-"$WRT_INFO"-"$WRT_BRANCH"-"$WRT_DATE".txt
+
+          {
+            echo "repo:    $WRT_REPO"
+            echo "branch:  $WRT_BRANCH"
+            echo "commit:  ${WRT_HASH:-unknown}"
+            echo "config:  $WRT_CONFIG"
+            echo "target:  $WRT_TARGET"
+            echo "date:    $WRT_DATE"
+          } > ./upload/BUILD-INFO.txt
+
+          if [ -f ../packages.lock ]; then
+            cp -f ../packages.lock ./upload/packages.lock
+          fi
 
           if [[ $WRT_TEST != 'true' ]]; then
             echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
@@ -287,16 +344,25 @@ jobs:
             done
 
             find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
+
+            (
+              cd ./upload
+              for f in *; do
+                [ "$f" = "sha256sums" ] && continue
+                [ -f "$f" ] && sha256sum "$f"
+              done > sha256sums
+            )
           fi
 
       - name: Release Firmware
-        uses: softprops/action-gh-release@master
+        if: env.WRT_TEST != 'true'
+        uses: softprops/action-gh-release@v3
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: ${{env.CI_NAME}}-${{env.WRT_CONFIG}}_${{env.WRT_DATE}}
-          files: ./wrt/upload/*.*
+          files: ./wrt/upload/*
           body: |
-            这是个平台固件包，内含多个设备！
-            请注意选择你需要的设备固件！
+            本固件只包含 Config 中显式选中的设备，请按文件名选择对应设备！
             不要问，刷就完事了！
 
             全系带开源硬件加速，别问了！
@@ -316,3 +382,8 @@ jobs:
 
             内核版本：${{env.WRT_KVER}}
             插件列表：${{env.WRT_LIST}}
+
+            附件说明：
+            - sha256sums：上传目录内各文件的校验和（改名后重新生成）
+            - packages.lock：本次构建所有第三方插件的 commit
+            - BUILD-INFO.txt：构建来源（源码/分支/commit/配置/时间）

@@ -12,18 +12,22 @@ on:
         required: false
         type: string
 
-permissions: write-all
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   auto_clean:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - name: Delete old Releases and Workflows
-        uses: ophub/delete-releases-workflows@main
+        #钉版本，避免上游改写
+        uses: ophub/delete-releases-workflows@f5873e66feb0a85460d7fbc073de6c89470e94d3
         with:
           gh_token: ${{secrets.GITHUB_TOKEN}}
           delete_releases: true
-          releases_keep_latest: ${{inputs.NUMBER || '0'}}
+          #定时触发时保留最近 3 个
+          releases_keep_latest: ${{inputs.NUMBER || '3'}}
           delete_tags: true
           delete_workflows: true
           workflows_keep_day: 0

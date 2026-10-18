@@ -2,13 +2,36 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
+set -uo pipefail
+
+#避免 clone 卡在认证提示
+export GIT_TERMINAL_PROMPT=0
+
+WORKSPACE="${GITHUB_WORKSPACE:-$(dirname "$(dirname "$(realpath "$0")")")}"
+LOCK_FILE="$WORKSPACE/packages.lock"
+
+REQUIRED_PKGS="argon luci-app-dae luci-app-honk"
+
+CLONE_FAILED=0   #必需包失败数（致命）
+CLONE_WARNED=0   #非必需包失败数（仅告警，避免上游改名的冷门包拖死构建）
+CLONE_OK=0
+
+is_required() {
+	case " $REQUIRED_PKGS " in
+	*" $1 "*) return 0 ;;
+	*) return 1 ;;
+	esac
+}
+
+: >"$LOCK_FILE"
+
 #安装和更新软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
 	local PKG_REPO=$2
 	local PKG_BRANCH=$3
-	local PKG_SPECIAL=$4
-	local PKG_LIST=("$PKG_NAME" $5)  # 第5个参数为自定义名称列表
+	local PKG_SPECIAL=${4:-}
+	local PKG_LIST=("$PKG_NAME" ${5:-})  # 第5个参数为自定义名称列表
 	local REPO_NAME=${PKG_REPO#*/}
 
 	echo " "
@@ -17,28 +40,51 @@ UPDATE_PACKAGE() {
 	for NAME in "${PKG_LIST[@]}"; do
 		# 查找匹配的目录
 		echo "Search directory: $NAME"
-		local FOUND_DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null)
+		local FOUND_DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null || true)
 
 		# 删除找到的目录
 		if [ -n "$FOUND_DIRS" ]; then
 			while read -r DIR; do
+				[ -n "$DIR" ] || continue
 				rm -rf "$DIR"
 				echo "Delete directory: $DIR"
-			done <<< "$FOUND_DIRS"
+			done <<<"$FOUND_DIRS"
 		else
-			echo "Not fonud directory: $NAME"
+			echo "Not found directory: $NAME"
 		fi
 	done
 
-	# 克隆 GitHub 仓库
-	git clone --depth=1 --single-branch --branch $PKG_BRANCH "https://github.com/$PKG_REPO.git"
+	local attempt ok=0
+	for attempt in 1 2; do
+		rm -rf "./$REPO_NAME"
+		if git clone --depth=1 --single-branch --branch "$PKG_BRANCH" "https://github.com/$PKG_REPO.git" "$REPO_NAME"; then
+			ok=1
+			break
+		fi
+		echo "::warning::clone $PKG_REPO@$PKG_BRANCH 第 $attempt 次失败"
+		sleep 5
+	done
+
+	if [ "$ok" -ne 1 ]; then
+		echo "::error::无法克隆 $PKG_REPO@$PKG_BRANCH —— 对应插件不会进入固件"
+		echo "$PKG_NAME $PKG_REPO $PKG_BRANCH CLONE-FAILED" >>"$LOCK_FILE"
+		if is_required "$PKG_NAME"; then
+			CLONE_FAILED=$((CLONE_FAILED + 1))
+		else
+			CLONE_WARNED=$((CLONE_WARNED + 1))
+		fi
+		return 1
+	fi
+
+	CLONE_OK=$((CLONE_OK + 1))
+	echo "$PKG_NAME $PKG_REPO $PKG_BRANCH $(git -C "$REPO_NAME" rev-parse --short HEAD 2>/dev/null || echo unknown)" >>"$LOCK_FILE"
 
 	# 处理克隆的仓库
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
-		find ./$REPO_NAME/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \;
+		find ./$REPO_NAME/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \; || true
 		rm -rf ./$REPO_NAME/
 	elif [[ "$PKG_SPECIAL" == "name" ]]; then
-		mv -f $REPO_NAME $PKG_NAME
+		mv -f "$REPO_NAME" "$PKG_NAME"
 	fi
 }
 
@@ -79,7 +125,8 @@ UPDATE_PACKAGE "qmodem" "FUjr/QModem" "main"
 UPDATE_PACKAGE "quickfile" "sbwml/luci-app-quickfile" "main"
 UPDATE_PACKAGE "timecontrol" "sirpdboy/luci-app-timecontrol" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "axonhub gecoosac sing-box luci-app-homeproxy luci-app-timewol luci-app-wolplus luci-app-wolultra"
-UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
+#上游已删库/私有，启用前先确认
+#UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-dae" "QiuSimons/luci-app-dae" "kix"
 UPDATE_PACKAGE "luci-app-honk" "QiuSimons/luci-app-honk" "master"
@@ -130,11 +177,13 @@ UPDATE_VERSION() {
 
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
+# 同步清掉 feeds 里的软链
+rm -f ./feeds/luci/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/v2ray-geodata
 rm -rf ./feeds/packages/net/v2ray-geodata
 rm -rf ./feeds/packages/v2ray-geodata
 rm -rf ./v2ray-geodata
-cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
+cp -r "$WORKSPACE/package/v2ray-geodata" ./
 
 
 #修复daed/Makefile
@@ -143,8 +192,19 @@ cp -r $GITHUB_WORKSPACE/package/v2ray-geodata ./
 #sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
 
 #引入私有扩展脚本，文件不存在时自动跳过
-if [ -f "$GITHUB_WORKSPACE/Scripts/PRIVATE.sh" ]; then
+if [ -f "$WORKSPACE/Scripts/PRIVATE.sh" ]; then
 	echo " "
 	echo "Applying private packages from PRIVATE.sh..."
-	source "$GITHUB_WORKSPACE/Scripts/PRIVATE.sh"
+	source "$WORKSPACE/Scripts/PRIVATE.sh"
+fi
+
+echo " "
+echo "===== 包克隆汇总：成功 $CLONE_OK，必需失败 $CLONE_FAILED，非必需失败 $CLONE_WARNED ====="
+echo "锁定清单已写入：$LOCK_FILE"
+if [ "$CLONE_WARNED" -ne 0 ]; then
+	echo "::warning::$CLONE_WARNED 个非必需包克隆失败，固件中不会有这些插件"
+fi
+if [ "$CLONE_FAILED" -ne 0 ]; then
+	echo "::error::$CLONE_FAILED 个必需包克隆失败（$REQUIRED_PKGS），构建中止"
+	exit 1
 fi

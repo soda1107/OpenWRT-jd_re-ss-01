@@ -102,9 +102,6 @@ CONFIG_PACKAGE_kmod-qca-nss-drv-l2tpv2=y
 CONFIG_PACKAGE_kmod-qca-nss-drv-lag-mgr=y
 EOF
 }
-function kernel_version() {
-  echo $(sed -n 's/^KERNEL_PATCHVER:=\(.*\)/\1/p' target/linux/qualcommax/Makefile)
-}
 function remove_wifi() {
   local target=$1
   #去除依赖
@@ -159,6 +156,8 @@ function generate_config() {
   #增加ebpf
   cat_ebpf_config $config_file
   enable_skb_recycler $config_file
+  # 需要 USB 网卡时取消注释
+  #cat_usb_net $config_file
   set_kernel_size
   #增加内核选项
   cat_kernel_config "target/linux/qualcommax/${target}/config-default"

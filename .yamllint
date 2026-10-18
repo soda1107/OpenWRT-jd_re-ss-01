@@ -1,0 +1,14 @@
+%YAML 1.2
+---
+extends: relaxed
+
+rules:
+  line-length: disable
+  indentation: disable
+  # on: / yes: 在 GitHub Actions 里是正常写法，YAML 1.1 会把它当布尔
+  truthy: disable
+  comments-indentation: disable
+  document-start: disable
+  key-duplicates: enable
+  trailing-spaces: enable
+  new-line-at-end-of-file: enable

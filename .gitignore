@@ -1,2 +1,7 @@
 /wrt
 /.idea
+/Config/PRIVATE.txt
+/Scripts/PRIVATE.sh
+/packages.lock
+/build.log
+/.ccache

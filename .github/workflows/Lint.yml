@@ -1,0 +1,59 @@
+# SPDX-License-Identifier: MIT
+# 只覆盖 6.18 流水线相关文件
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: shellcheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: shellcheck
+        run: |
+          sudo -E apt-get update -qq
+          sudo -E apt-get install -y -qq shellcheck
+          shellcheck --version
+          # 只报 error 级别
+          shellcheck -S error -x -s bash diy.sh Scripts/*.sh
+
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: actionlint
+        run: |
+          bash <(curl -sSfL --max-time 60 https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          # 关闭内嵌 shellcheck，交给上面的 job
+          ./actionlint -color -shellcheck= \
+            .github/workflows/WRT-CORE.yml \
+            .github/workflows/QCA-6.18-VIKINGYFY.yml \
+            .github/workflows/Auto-Clean.yml \
+            .github/workflows/Lint.yml
+
+  yamllint:
+    name: yamllint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: yamllint
+        run: |
+          pipx install yamllint
+          export PATH="$HOME/.local/bin:$PATH"
+          yamllint -c .yamllint \
+            .github/workflows/WRT-CORE.yml \
+            .github/workflows/QCA-6.18-VIKINGYFY.yml \
+            .github/workflows/Auto-Clean.yml \
+            .github/workflows/Lint.yml

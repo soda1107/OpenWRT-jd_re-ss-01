@@ -1,13 +1,8 @@
 #!/bin/bash
+# 本地编译入口（对应 QCA-6.18 流水线）；用法：./diy.sh [Config] [源码仓库]
 
-#WRT_REPO='https://github.com/LiBwrt/openwrt-6.x'
-#WRT_BRANCH='k6.12-nss'
-
-WRT_REPO='https://github.com/davidtall/immortalwrt'
-WRT_BRANCH='viking-main'
-
-#WRT_REPO='https://github.com/VIKINGYFY/immortalwrt'
-#WRT_BRANCH='main'
+WRT_REPO='https://github.com/VIKINGYFY/immortalwrt'
+WRT_BRANCH='main'
 
 if [ -n "$1" ]; then
     # 如果有传递参数，赋值给WRT_TARGET
@@ -24,18 +19,15 @@ fi
 
 export WRT_DIR=wrt
 export GITHUB_WORKSPACE=$(pwd)
-export WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d_%H.%M.%S")
-export WRT_VER=$(echo $WRT_REPO | cut -d '/' -f 5-)-$WRT_BRANCH
-export WRT_TYPE=$(sed -n "1{s/^#//;s/\r$//;p;q}" $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt)
+export WRT_DATE=$(TZ='Asia/Shanghai' date +"%y.%m.%d-%H.%M.%S")
 export WRT_NAME='OWRT'
 export WRT_SSID='OWRT'
 export WRT_WORD='12345678'
 export WRT_THEME='argon'
 export WRT_IP='192.168.10.1'
-export WRT_CI='WSL-OpenWRT-CI'
 export WRT_MARK='DaeWRT'
+export CI_NAME='QCA-6.18-VIKINGYFY'
 export WRT_ARCH=$(sed -n 's/.*_DEVICE_\(.*\)_DEVICE_.*/\1/p' $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt | head -n 1)
-export CI_NAME='QCA-6.18-LiBwrt'
 export WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt | tr '[:lower:]' '[:upper:]')
 
 . $GITHUB_WORKSPACE/Scripts/function.sh
@@ -57,6 +49,7 @@ fi
 cd package/
 $GITHUB_WORKSPACE/Scripts/Packages.sh
 $GITHUB_WORKSPACE/Scripts/Handles.sh
+$GITHUB_WORKSPACE/Scripts/FixDaedInit.sh
 cd ..
 
 generate_config
@@ -64,6 +57,8 @@ generate_config
 $GITHUB_WORKSPACE/Scripts/Settings.sh
 
 make defconfig
+bash $GITHUB_WORKSPACE/Scripts/AssertConfig.sh
+
 # make download -j8
 # make -j$(nproc) || make V=s -j1
 
