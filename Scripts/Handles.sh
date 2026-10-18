@@ -33,18 +33,21 @@ FIX "theme-argon" "$PACKAGE_PATH/luci-theme-argon" sed -i \
 	"s/primary '.*'/primary '#31a1a1'/g; s/'0.2'/'0.5'/g; s/'none'/'bing'/g; s/'600'/'normal'/g" \
 	"$PACKAGE_PATH/luci-theme-argon/luci-app-argon-config/root/etc/config/argon"
 
-#修改aurora菜单式样
-FIX "theme-aurora" "$PACKAGE_PATH/luci-app-aurora-config" find \
-	"$PACKAGE_PATH/luci-app-aurora-config/root/usr/share/aurora/" -type f -name '*.template' -exec sed -i \
-	"s/nav_type '.*'/nav_type 'dropdown'/g; s/struct_radius_base '.*'/struct_radius_base '0.125rem'/g" {} +
+#修复honk版本号（下划线不符合 APK 版本规范）
+FIX "honk-version" "$PKG_PATH/luci-app-honk/honk" sed -i 's/PKG_VERSION:=\([0-9.]*\)_.*/PKG_VERSION:=\1/' \
+	"$PKG_PATH/luci-app-honk/honk/Makefile"
+
+#对齐上游编译参数：GOEXPERIMENT 补 heapminimum512kib,randomizedheapbase64
+DAE_MK="$PKG_PATH/luci-app-dae/dae/Makefile"
+FIX "dae-goexperiment" "$PKG_PATH/luci-app-dae/dae" bash -c '
+	grep -q heapminimum512kib "$1" && exit 0
+	sed -i "s|GOEXPERIMENT=newinliner,simd|GOEXPERIMENT=newinliner,simd,heapminimum512kib,randomizedheapbase64|" "$1"
+	grep -q heapminimum512kib "$1"
+' _ "$DAE_MK"
 
 #修改mini-diskmanager菜单位置
 FIX "mini-diskmanager" "$PACKAGE_PATH/luci-app-mini-diskmanager" sed -i "s/services/system/g" \
 	"$PACKAGE_PATH/luci-app-mini-diskmanager/luci-app-mini-diskmanager/root/usr/share/luci/menu.d/luci-app-mini-diskmanager.json"
-
-#修改natmapt菜单位置
-FIX "natmapt" "$PACKAGE_PATH/luci-app-natmapt" sed -i "s/network/services/g" \
-	"$PACKAGE_PATH/luci-app-natmapt/root/usr/share/luci/menu.d/luci-app-natmap.json"
 
 #修复TailScale配置文件冲突
 TS_FILE="$(find "$FEEDS_PATH/packages" -maxdepth 3 -type f -wholename '*/tailscale/Makefile' -print -quit 2>/dev/null)"

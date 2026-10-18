@@ -137,7 +137,6 @@ function check_network() {
 
 function update_apt_source() {
 	__info_msg "Updating apt source lists..."
-	set -x
 
 	apt update -y
 	apt install -y apt-transport-https gnupg2
@@ -245,12 +244,9 @@ function update_apt_source() {
 	fi
 
 	apt update -y $BPO_FLAG || { __warning_msg "apt update 失败，重试一次"; sleep 5; apt update -y $BPO_FLAG || __warning_msg "apt update 仍然失败，继续"; }
-
-	set +x
 }
 function install_dependencies() {
 	__info_msg "Installing dependencies..."
-	set -x
 
 	apt install -y $BPO_FLAG ack antlr3 asciidoc autoconf automake autopoint binutils bison \
 		build-essential bzip2 ccache cmake cpio curl device-tree-compiler ecj fakeroot \
@@ -352,7 +348,6 @@ function install_dependencies() {
 	popd
 	rm -rf "$TMP_DIR"
 
-	set +x
 	__success_msg "All dependencies have been installed."
 }
 function main() {

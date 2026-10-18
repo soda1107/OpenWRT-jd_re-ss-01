@@ -4,7 +4,7 @@
 CONFIG_PACKAGE_luci-app-dae=y
 CONFIG_PACKAGE_luci-app-honk=y
 CONFIG_PACKAGE_honk=y
-# luci-theme-bootstrap 不再单独编译：Settings.sh 已把 collections 的默认主题换成 argon
+CONFIG_PACKAGE_luci-theme-bootstrap=y
 CONFIG_PACKAGE_luci-theme-shadcn=y
 CONFIG_PACKAGE_ucode-mod-math=y
 #增加插件

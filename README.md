@@ -19,7 +19,7 @@ https://www.right.com.cn/forum/thread-8402269-1-1.html
 
 固件信息里的时间为编译开始的时间，方便核对上游源码提交时间。
 
-当前工作流只构建 QUALCOMMAX 系列（ipq60xx / jdcloud_re-ss-01）；其余平台的 Config 仍保留，但不再自动构建。
+当前工作流只构建 QUALCOMMAX 系列（ipq60xx / jdcloud_re-ss-01）。
 
 # 目录简要说明：
 

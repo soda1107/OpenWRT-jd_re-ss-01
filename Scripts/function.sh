@@ -58,32 +58,6 @@ CONFIG_KERNEL_TRANSPARENT_HUGEPAGE_MADVISE=y
 EOF
 }
 
-function cat_usb_net() {
-  cat >> $1 <<EOF
-#USB CPE Driver
-CONFIG_PACKAGE_kmod-usb-net=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-eem=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-subset=y
-CONFIG_PACKAGE_kmod-usb-net-huawei-cdc-ncm=y
-CONFIG_PACKAGE_kmod-usb-net-ipheth=y
-CONFIG_PACKAGE_kmod-usb-net-rndis=y
-CONFIG_PACKAGE_kmod-usb-net-rtl8150=y
-CONFIG_PACKAGE_kmod-usb-net-rtl8152=y
-EOF
-#6.12内核不包含以下驱动
-if echo "$CI_NAME" | grep -v "6.12" > /dev/null; then
-  cat >> $1 <<EOF
-CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
-CONFIG_PACKAGE_kmod-usb-net-qmi-wwan-fibocom=y
-CONFIG_PACKAGE_kmod-usb-net-qmi-wwan-quectel=y
-EOF
-fi
-
-}
-
 function set_nss_driver() {
   cat >> $1 <<EOF
 #NSS驱动相关
@@ -116,16 +90,10 @@ function remove_wifi() {
 }
 
 function set_kernel_size() {
-  #修改jdc ax1800 pro 的内核大小为12M
+  #jdcloud_re-ss-01 内核 12M
   image_file='./target/linux/qualcommax/image/ipq60xx.mk'
   sed -i "/^define Device\/emmc-common/,/^endef/ s/KERNEL_SIZE := 6144k/KERNEL_SIZE := 12288k/" $image_file
-  sed -i "/^define Device\/nand-common/,/^endef/ s/^endef/\tKERNEL_SIZE := 8192k\nendef/" $image_file
   sed -i "/^define Device\/jdcloud_re-ss-01/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
-  sed -i "/^define Device\/jdcloud_re-cs-02/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
-  sed -i "/^define Device\/jdcloud_re-cs-07/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
-#  sed -i "/^define Device\/redmi_ax5-jdcloud/,/^endef/ s/^endef/  KERNEL_SIZE := 12288k\nendef/" $image_file
-  sed -i "/^define Device\/linksys_mr/,/^endef/ { /KERNEL_SIZE := 8192k/s//KERNEL_SIZE := 12288k/ }" $image_file
-  cat $image_file
 }
 #开启内存回收补丁
 function enable_skb_recycler() {
@@ -139,11 +107,7 @@ function generate_config() {
   config_file=".config"
   #如配置文件已存在
   cat $GITHUB_WORKSPACE/Config/${WRT_CONFIG}.txt > $config_file
-
-  #TEST 配置只做单文件快速校验，不追加 GENERAL.txt
-  if [[ "${WRT_CONFIG,,}" != *"test"* ]]; then
-    cat $GITHUB_WORKSPACE/Config/GENERAL.txt >> $config_file
-  fi
+  cat $GITHUB_WORKSPACE/Config/GENERAL.txt >> $config_file
 
   local target=$(echo $WRT_ARCH | cut -d'_' -f2)
 
@@ -156,8 +120,6 @@ function generate_config() {
   #增加ebpf
   cat_ebpf_config $config_file
   enable_skb_recycler $config_file
-  # 需要 USB 网卡时取消注释
-  #cat_usb_net $config_file
   set_kernel_size
   #增加内核选项
   cat_kernel_config "target/linux/qualcommax/${target}/config-default"

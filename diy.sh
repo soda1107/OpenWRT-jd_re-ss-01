@@ -49,7 +49,6 @@ fi
 cd package/
 $GITHUB_WORKSPACE/Scripts/Packages.sh
 $GITHUB_WORKSPACE/Scripts/Handles.sh
-$GITHUB_WORKSPACE/Scripts/FixDaedInit.sh
 cd ..
 
 generate_config

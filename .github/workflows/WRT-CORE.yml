@@ -164,7 +164,6 @@ jobs:
 
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           $GITHUB_WORKSPACE/Scripts/Handles.sh
-          $GITHUB_WORKSPACE/Scripts/FixDaedInit.sh
 
       - name: Custom Settings
         run: |
