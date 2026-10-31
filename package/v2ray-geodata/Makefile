@@ -48,12 +48,23 @@ GEOSITE_URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/dow
 
 define Build/Compile
 	( \
-		pushd $(PKG_BUILD_DIR) ; \
-		curl -L $(GEOIP_URL) -o geoip.dat --progress-bar ; \
-		curl -L $(GEOSITE_URL) -o geosite.dat --progress-bar ; \
-		[ "$(curl -sL $(GEOIP_URL).sha256sum | awk '{print $1}')" != "$(sha256sum geoip.dat | awk '{print $1}')" ] && exit 1 ; \
-		[ "$(curl -sL $(GEOSITE_URL).sha256sum | awk '{print $1}')" != "$(sha256sum geosite.dat | awk '{print $1}')" ] && exit 1 ; \
-		popd ; \
+		set -eu; \
+		cd "$(PKG_BUILD_DIR)"; \
+		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOIP_URL)" -o geoip.dat.tmp --progress-bar; \
+		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOSITE_URL)" -o geosite.dat.tmp --progress-bar; \
+		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOIP_URL).sha256sum" -o geoip.dat.sha256sum.tmp; \
+		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOSITE_URL).sha256sum" -o geosite.dat.sha256sum.tmp; \
+		geoip_sha256=$$(awk 'NR == 1 {print $$1; exit}' geoip.dat.sha256sum.tmp); \
+		geosite_sha256=$$(awk 'NR == 1 {print $$1; exit}' geosite.dat.sha256sum.tmp); \
+		case "$$geoip_sha256" in *[!0-9a-fA-F]*|'') echo "Invalid GeoIP checksum" >&2; exit 1;; esac; \
+		case "$$geosite_sha256" in *[!0-9a-fA-F]*|'') echo "Invalid GeoSite checksum" >&2; exit 1;; esac; \
+		[ "$${#geoip_sha256}" -eq 64 ] || { echo "Invalid GeoIP checksum length" >&2; exit 1; }; \
+		[ "$${#geosite_sha256}" -eq 64 ] || { echo "Invalid GeoSite checksum length" >&2; exit 1; }; \
+		printf '%s  %s\n' "$$geoip_sha256" geoip.dat.tmp | sha256sum -c -; \
+		printf '%s  %s\n' "$$geosite_sha256" geosite.dat.tmp | sha256sum -c -; \
+		mv geoip.dat.tmp geoip.dat; \
+		mv geosite.dat.tmp geosite.dat; \
+		rm -f geoip.dat.sha256sum.tmp geosite.dat.sha256sum.tmp; \
 	)
 endef
 
