@@ -209,13 +209,12 @@ jobs:
           restore-keys: |
             toolchain-${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-
 
-      - name: Cache Wrt Build - 目标包（staging/target + build_dir/target，随配置变）
+      - name: Cache Wrt Build - 目标包（staging/target，随配置变）
         id: cache-target
         uses: actions/cache@v4
         with:
           path: |
             wrt/staging_dir/target-*/
-            wrt/build_dir/target-*/
           key: ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-${{ hashFiles('Config/*.txt', 'Scripts/*.sh', 'package/**') }}
           restore-keys: |
             ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-
@@ -256,7 +255,28 @@ jobs:
           cd ./wrt/
 
           set -o pipefail
-          make -j$(nproc) 2>&1 | tee ../build.log
+          if make -j$(nproc) 2>&1 | tee ../build.log; then
+            exit 0
+          fi
+
+          #失败包的错误不在控制台，先打包级日志，没有日志再串行重编一次
+          FAILED=$(sed -n 's/.*ERROR: \(package\/[^ ]*\) failed to build.*/\1/p' ../build.log | head -1 || true)
+          echo "failed package: ${FAILED:-<unknown>}"
+          if [ -n "${FAILED:-}" ]; then
+            LOGS=$(find "logs/$FAILED" -name '*.txt' 2>/dev/null || true)
+            if [ -n "$LOGS" ]; then
+              for f in $LOGS; do
+                echo "::group::$f"
+                tail -n 80 "$f"
+                echo "::endgroup::"
+              done
+            else
+              echo "::group::$FAILED 串行重编"
+              make -j1 V=s "$FAILED/compile" 2>&1 | tail -n 150 || true
+              echo "::endgroup::"
+            fi
+          fi
+          exit 1
 
       - name: Upload Build Logs
         if: failure()

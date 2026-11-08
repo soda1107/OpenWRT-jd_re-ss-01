@@ -74,6 +74,11 @@ for sym in \
 	has_sym "$sym=y" || echo "::warning::$sym 不在 .config 中（符号可能不存在，或包未启用）"
 done
 
+has_sym "CONFIG_BUILD_LOG=y" ||
+	echo "::warning::CONFIG_BUILD_LOG 没生效，失败时不会有包级 compile.txt 日志"
+has_sym "# CONFIG_OPENSSL_ENGINE is not set" ||
+	echo "::warning::CONFIG_OPENSSL_ENGINE 仍被打开，openssh 会走 --with-ssl-engine"
+
 if [[ "${WRT_CONFIG:-}" == *"NOWIFI"* ]]; then
 	for sym in CONFIG_PACKAGE_wpad-openssl CONFIG_PACKAGE_hostapd-common CONFIG_PACKAGE_kmod-ath11k; do
 		if has_sym "$sym=y"; then
