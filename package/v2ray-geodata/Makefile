@@ -7,8 +7,14 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=v2ray-geodata
-PKG_VERSION:=$(shell date "+%Y.%m.%d")
+PKG_VERSION:=2026.11.07
 PKG_RELEASE:=1
+
+# 单一来源：rules.zip 里同时含 geoip.dat 与 geosite.dat。
+# 固定 tag + PKG_HASH，交给 OpenWrt 下载器缓存/重试，构建期不再联网抓 latest。
+PKG_SOURCE:=rules.zip
+PKG_SOURCE_URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/download/202611072203/
+PKG_HASH:=c71313870a21d8a4466b532a5a360c9c5b61bdcae12b09a7f5724ec2460a324d
 
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)
 
@@ -43,29 +49,15 @@ define Package/v2ray-geodata-updater
   LICENSE:=GPL-3.0
 endef
 
-GEOIP_URL:=https://github.com/Loyalsoldier/geoip/releases/latest/download/geoip.dat
-GEOSITE_URL:=https://github.com/Loyalsoldier/v2ray-rules-dat/releases/latest/download/geosite.dat
+define Build/Prepare
+	rm -rf $(PKG_BUILD_DIR)
+	mkdir -p $(PKG_BUILD_DIR)
+	unzip -o -j $(DL_DIR)/$(PKG_SOURCE) geoip.dat geosite.dat -d $(PKG_BUILD_DIR)
+	test -s $(PKG_BUILD_DIR)/geoip.dat
+	test -s $(PKG_BUILD_DIR)/geosite.dat
+endef
 
 define Build/Compile
-	( \
-		set -eu; \
-		cd "$(PKG_BUILD_DIR)"; \
-		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOIP_URL)" -o geoip.dat.tmp --progress-bar; \
-		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOSITE_URL)" -o geosite.dat.tmp --progress-bar; \
-		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOIP_URL).sha256sum" -o geoip.dat.sha256sum.tmp; \
-		curl -fL --retry 3 --retry-delay 2 --connect-timeout 15 --max-time 300 "$(GEOSITE_URL).sha256sum" -o geosite.dat.sha256sum.tmp; \
-		geoip_sha256=$$(awk 'NR == 1 {print $$1; exit}' geoip.dat.sha256sum.tmp); \
-		geosite_sha256=$$(awk 'NR == 1 {print $$1; exit}' geosite.dat.sha256sum.tmp); \
-		case "$$geoip_sha256" in *[!0-9a-fA-F]*|'') echo "Invalid GeoIP checksum" >&2; exit 1;; esac; \
-		case "$$geosite_sha256" in *[!0-9a-fA-F]*|'') echo "Invalid GeoSite checksum" >&2; exit 1;; esac; \
-		[ "$${#geoip_sha256}" -eq 64 ] || { echo "Invalid GeoIP checksum length" >&2; exit 1; }; \
-		[ "$${#geosite_sha256}" -eq 64 ] || { echo "Invalid GeoSite checksum length" >&2; exit 1; }; \
-		printf '%s  %s\n' "$$geoip_sha256" geoip.dat.tmp | sha256sum -c -; \
-		printf '%s  %s\n' "$$geosite_sha256" geosite.dat.tmp | sha256sum -c -; \
-		mv geoip.dat.tmp geoip.dat; \
-		mv geosite.dat.tmp geosite.dat; \
-		rm -f geoip.dat.sha256sum.tmp geosite.dat.sha256sum.tmp; \
-	)
 endef
 
 define Package/v2ray-geoip/install
