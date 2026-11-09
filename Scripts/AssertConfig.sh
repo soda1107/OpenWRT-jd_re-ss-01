@@ -21,8 +21,6 @@ echo "===== 1) 核心插件必须存在 ====="
 REQUIRED="
 CONFIG_PACKAGE_dae
 CONFIG_PACKAGE_luci-app-dae
-CONFIG_PACKAGE_honk
-CONFIG_PACKAGE_luci-app-honk
 CONFIG_PACKAGE_v2ray-geoip
 CONFIG_PACKAGE_v2ray-geosite
 CONFIG_PACKAGE_v2ray-geodata-updater
@@ -64,6 +62,11 @@ else
 fi
 
 echo "===== 3) 软性检查（只告警） ====="
+# honk 为可选插件：缺了不拦构建
+for sym in CONFIG_PACKAGE_luci-app-honk CONFIG_PACKAGE_honk; do
+	has_sym "$sym=y" && echo "  OK    $sym（可选）" || echo "  --    $sym 未启用（可选）"
+done
+
 for sym in \
 	CONFIG_KERNEL_DEBUG_INFO_BTF \
 	CONFIG_KERNEL_BPF_EVENTS \

@@ -10,7 +10,7 @@ export GIT_TERMINAL_PROMPT=0
 WORKSPACE="${GITHUB_WORKSPACE:-$(dirname "$(dirname "$(realpath "$0")")")}"
 LOCK_FILE="$WORKSPACE/packages.lock"
 
-REQUIRED_PKGS="argon luci-app-dae luci-app-honk"
+REQUIRED_PKGS="argon luci-app-dae"
 
 CLONE_FAILED=0   #必需包失败数（致命）
 CLONE_WARNED=0   #非必需包失败数（仅告警，避免上游改名的冷门包拖死构建）
