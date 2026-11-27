@@ -1,7 +1,9 @@
 #科学插件调整
 #CONFIG_PACKAGE_luci-app-homeproxy=y
 #CONFIG_PACKAGE_luci-app-daed=y
-CONFIG_PACKAGE_luci-app-dae=y
+CONFIG_PACKAGE_luci-app-daeuniverse=y
+CONFIG_DAEU_WITH_DAE=y
+# CONFIG_DAEU_WITH_HONK is not set
 #CONFIG_PACKAGE_luci-app-honk=y
 #CONFIG_PACKAGE_honk=y
 CONFIG_PACKAGE_ucode-mod-math=y
@@ -113,8 +115,6 @@ CONFIG_DEFAULT_tcp_cubic=y
 CONFIG_PACKAGE_v2ray-geoip=y
 CONFIG_PACKAGE_v2ray-geosite=y
 CONFIG_PACKAGE_v2ray-geodata-updater=y
-CONFIG_PACKAGE_dae-geoip=y
-CONFIG_PACKAGE_dae-geosite=y
 CONFIG_PACKAGE_tcpdump=y
 CONFIG_PACKAGE_block-mount=y
 CONFIG_PACKAGE_btop=y

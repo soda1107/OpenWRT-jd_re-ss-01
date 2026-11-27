@@ -20,7 +20,8 @@ has_sym() {
 echo "===== 1) 核心插件必须存在 ====="
 REQUIRED="
 CONFIG_PACKAGE_dae
-CONFIG_PACKAGE_luci-app-dae
+CONFIG_PACKAGE_luci-app-daeuniverse
+CONFIG_DAEU_WITH_DAE
 CONFIG_PACKAGE_v2ray-geoip
 CONFIG_PACKAGE_v2ray-geosite
 CONFIG_PACKAGE_v2ray-geodata-updater
@@ -48,6 +49,9 @@ if [ -f "$KFRAG" ]; then
 		'CONFIG_BPF_EVENTS=y' \
 		'CONFIG_NET_CLS_BPF=[ym]' \
 		'CONFIG_NET_SCH_INGRESS=[ym]' \
+		'CONFIG_KPROBES=y' \
+		'CONFIG_KPROBE_EVENTS=y' \
+		'CONFIG_CGROUP_BPF=y' \
 		'CONFIG_CGROUPS=y'; do
 		if grep -qxE "$pat" "$KFRAG"; then
 			echo "  OK    $pat"
@@ -62,18 +66,17 @@ else
 fi
 
 echo "===== 3) 软性检查（只告警） ====="
-# honk 为可选插件：缺了不拦构建
-for sym in CONFIG_PACKAGE_luci-app-honk CONFIG_PACKAGE_honk; do
-	has_sym "$sym=y" && echo "  OK    $sym（可选）" || echo "  --    $sym 未启用（可选）"
-done
+if has_sym "CONFIG_DAEU_WITH_HONK=y"; then
+	echo "::warning::CONFIG_DAEU_WITH_HONK 被打开，会拉入 Rust 写的 honk-core，本架构没有预编译二进制"
+fi
 
 for sym in \
 	CONFIG_KERNEL_DEBUG_INFO_BTF \
 	CONFIG_KERNEL_BPF_EVENTS \
+	CONFIG_KERNEL_CGROUP_BPF \
 	CONFIG_PACKAGE_kmod-sched-bpf \
-	CONFIG_PACKAGE_kmod-veth \
-	CONFIG_PACKAGE_dae-geoip \
-	CONFIG_PACKAGE_dae-geosite; do
+	CONFIG_PACKAGE_kmod-sched-core \
+	CONFIG_PACKAGE_kmod-veth; do
 	has_sym "$sym=y" || echo "::warning::$sym 不在 .config 中（符号可能不存在，或包未启用）"
 done
 

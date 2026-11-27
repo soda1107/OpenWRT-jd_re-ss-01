@@ -10,7 +10,7 @@ export GIT_TERMINAL_PROMPT=0
 WORKSPACE="${GITHUB_WORKSPACE:-$(dirname "$(dirname "$(realpath "$0")")")}"
 LOCK_FILE="$WORKSPACE/packages.lock"
 
-REQUIRED_PKGS="argon luci-app-dae"
+REQUIRED_PKGS="argon luci-app-daeuniverse"
 
 CLONE_FAILED=0   #必需包失败数（致命）
 CLONE_WARNED=0   #非必需包失败数（仅告警，避免上游改名的冷门包拖死构建）
@@ -126,8 +126,7 @@ UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "axonhub gecoosac sing-bo
 #上游已删库/私有，启用前先确认
 #UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
-UPDATE_PACKAGE "luci-app-dae" "QiuSimons/luci-app-dae" "kix"
-UPDATE_PACKAGE "luci-app-honk" "QiuSimons/luci-app-honk" "master"
+UPDATE_PACKAGE "luci-app-daeuniverse" "QiuSimons/luci-app-daeuniverse" "master"
 
 #更新软件包版本
 UPDATE_VERSION() {
