@@ -115,7 +115,7 @@ function check_system() {
 		UBUNTU_CODENAME="noble"
 		;;
 	*)
-		__error_msg "Unsupported OS, use Ubuntu 20.04 instead."
+		__error_msg "Unsupported OS: $VERSION_CODENAME，请把 workflow 的 runs-on 固定为 ubuntu-24.04"
 		exit 1
 		;;
 	esac

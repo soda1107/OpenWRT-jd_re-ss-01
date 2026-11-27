@@ -71,7 +71,8 @@ env:
 jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
-    runs-on: ubuntu-latest
+    # 固定 24.04：ubuntu-latest 已切到 26.04(resolute)，init_build_environment.sh 未适配且 apt.llvm.org 无该发行版源
+    runs-on: ubuntu-24.04
     timeout-minutes: 330
     steps:
       - name: Install BC
