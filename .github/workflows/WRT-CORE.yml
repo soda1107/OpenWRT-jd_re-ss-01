@@ -71,9 +71,9 @@ env:
 jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
-    # 固定 24.04：ubuntu-latest 已切到 26.04(resolute)，init_build_environment.sh 未适配且 apt.llvm.org 无该发行版源
+    # 固定 24.04：上游 init 脚本不支持 26.04
     runs-on: ubuntu-24.04
-    timeout-minutes: 330
+    timeout-minutes: 360
     steps:
       - name: Install BC
         env:
@@ -106,20 +106,32 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-          sudo -E apt -yqq install dos2unix libfuse-dev
-          dos2unix "$GITHUB_WORKSPACE/Scripts/init_build_environment.sh"
-          sudo bash "$GITHUB_WORKSPACE/Scripts/init_build_environment.sh"
+          sudo -E apt -yqq install dos2unix libfuse-dev sparse
+          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-#          sudo chown $USER:$GROUPS $GITHUB_WORKSPACE
-#          sudo mkdir -p /mnt/build_wrt
-#          sudo chown $USER:$USER /mnt/build_wrt
-#          sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
+          # 上游脚本无 set -e，缺件不会失败，显式校验
+          for tool in clang lld ccache upx upx-ucl padjffs2 po2lmo gh; do
+            command -v "$tool" >/dev/null || { echo "::error::init 环境缺少 $tool"; exit 1; }
+          done
+          if command -v go >/dev/null 2>&1; then
+            echo "GO_INSTALLED=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Install Honk Toolchain
+        run: |
+          sudo -E bash "$GITHUB_WORKSPACE/Scripts/InitHonkToolchain.sh"
+          {
+            echo "CARGO_HOME=/usr/local/cargo"
+            echo "RUSTUP_HOME=/usr/local/rustup"
+          } >> "$GITHUB_ENV"
+          echo "/usr/local/cargo/bin" >> "$GITHUB_PATH"
 
       - name: Setup Go
-        uses: actions/setup-go@v6
+        if: env.GO_INSTALLED != 'true'
+        uses: actions/setup-go@v7
         with:
-          go-version: '1.26'
+          go-version: '1.27'
           cache: false
       - run: go version
 
@@ -141,7 +153,7 @@ jobs:
         run: |
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
 
-          #剔除源码树内置的国内镜像源，避免个别镜像异常时拖慢或打断 downloads
+          #剔除国内镜像源，避免个别镜像异常时拖慢 downloads
           PROJECT_MIRRORS_FILE="./wrt/scripts/projectsmirrors.json"
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
             sed -i '/\.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"

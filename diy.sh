@@ -1,5 +1,6 @@
 #!/bin/bash
 # 本地编译入口（对应 QCA-6.18 流水线）；用法：./diy.sh [Config] [源码仓库]
+# 编译前需先 sudo Scripts/InitHonkToolchain.sh 装 honk 交叉编译工具链
 
 WRT_REPO='https://github.com/VIKINGYFY/immortalwrt'
 WRT_BRANCH='main'

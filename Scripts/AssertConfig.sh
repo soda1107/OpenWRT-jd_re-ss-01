@@ -68,7 +68,7 @@ else
 fi
 
 echo "===== 3) 软性检查（只告警） ====="
-# dae 的 DAE_USE_*_BTF 在上游 Makefile 里写在 include package.mk 之前，kconfig 收不到该符号，默认即内核 BTF
+#dae 的 DAE_USE_*_BTF 未进 kconfig（上游写在 include 之前），默认即内核 BTF
 for sym in \
 	CONFIG_KERNEL_DEBUG_INFO_BTF \
 	CONFIG_KERNEL_BPF_EVENTS \
