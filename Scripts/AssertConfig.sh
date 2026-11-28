@@ -25,7 +25,6 @@ CONFIG_PACKAGE_luci-app-daeuniverse
 CONFIG_DAEU_WITH_DAE
 CONFIG_DAEU_WITH_HONK
 CONFIG_HONK_USE_KERNEL_BTF
-CONFIG_DAE_USE_KERNEL_BTF
 CONFIG_PACKAGE_v2ray-geoip
 CONFIG_PACKAGE_v2ray-geosite
 CONFIG_PACKAGE_luci-theme-$THEME
@@ -69,6 +68,7 @@ else
 fi
 
 echo "===== 3) 软性检查（只告警） ====="
+# dae 的 DAE_USE_*_BTF 在上游 Makefile 里写在 include package.mk 之前，kconfig 收不到该符号，默认即内核 BTF
 for sym in \
 	CONFIG_KERNEL_DEBUG_INFO_BTF \
 	CONFIG_KERNEL_BPF_EVENTS \
