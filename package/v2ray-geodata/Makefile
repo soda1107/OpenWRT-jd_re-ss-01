@@ -43,12 +43,6 @@ define Package/v2ray-geosite
   LICENSE:=GPL-3.0
 endef
 
-define Package/v2ray-geodata-updater
-  $(call Package/v2ray-geodata/default)
-  TITLE:=Geodata Updater for V2Ray
-  LICENSE:=GPL-3.0
-endef
-
 define Build/Prepare
 	rm -rf $(PKG_BUILD_DIR)
 	mkdir -p $(PKG_BUILD_DIR)
@@ -70,13 +64,5 @@ define Package/v2ray-geosite/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/geosite.dat $(1)/usr/share/v2ray/geosite.dat
 endef
 
-define Package/v2ray-geodata-updater/install
-	$(INSTALL_DIR) $(1)/bin
-	$(INSTALL_BIN) ./v2ray-geodata-updater $(1)/bin/
-	$(INSTALL_DIR) $(1)/etc/uci-defaults
-	$(INSTALL_BIN) ./init.sh $(1)/etc/uci-defaults/xxx-v2ray-geodata-updater
-endef
-
 $(eval $(call BuildPackage,v2ray-geoip))
 $(eval $(call BuildPackage,v2ray-geosite))
-$(eval $(call BuildPackage,v2ray-geodata-updater))

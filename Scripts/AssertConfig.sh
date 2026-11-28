@@ -20,11 +20,14 @@ has_sym() {
 echo "===== 1) 核心插件必须存在 ====="
 REQUIRED="
 CONFIG_PACKAGE_dae
+CONFIG_PACKAGE_honk
 CONFIG_PACKAGE_luci-app-daeuniverse
 CONFIG_DAEU_WITH_DAE
+CONFIG_DAEU_WITH_HONK
+CONFIG_HONK_USE_KERNEL_BTF
+CONFIG_DAE_USE_KERNEL_BTF
 CONFIG_PACKAGE_v2ray-geoip
 CONFIG_PACKAGE_v2ray-geosite
-CONFIG_PACKAGE_v2ray-geodata-updater
 CONFIG_PACKAGE_luci-theme-$THEME
 CONFIG_PACKAGE_luci-app-$THEME-config
 "
@@ -66,10 +69,6 @@ else
 fi
 
 echo "===== 3) 软性检查（只告警） ====="
-if has_sym "CONFIG_DAEU_WITH_HONK=y"; then
-	echo "::warning::CONFIG_DAEU_WITH_HONK 被打开，会拉入 Rust 写的 honk-core，本架构没有预编译二进制"
-fi
-
 for sym in \
 	CONFIG_KERNEL_DEBUG_INFO_BTF \
 	CONFIG_KERNEL_BPF_EVENTS \

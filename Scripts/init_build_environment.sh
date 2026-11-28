@@ -350,11 +350,89 @@ function install_dependencies() {
 
 	__success_msg "All dependencies have been installed."
 }
+
+function install_honk_toolchain() {
+	__info_msg "Installing honk-core toolchain..."
+
+	# honk 交叉编译（bpf-linker + zig + cargo-zigbuild），版本对齐 honk 仓库
+	# .github/ci/pins.env 与 rust-toolchain.toml；pins 变动时包内脚本会自行补装
+	local BPF_LINKER_VERSION="0.11.0"
+	local BPF_LINKER_SHA256="10f62ba9ab7e544d538370552660efcb4f1a19153d5752bbf0f6b51f3bada450"
+	local ZIG_VERSION="0.17.1"
+	local ZIG_SHA256="3581863e3cbcfd0fce0efc682ce7e9e93da96668a977791d356a26d2a7e9b17a"
+	local RUST_CHANNEL="1.100.0"
+	local EBPF_CHANNEL="nightly-2026-10-20"
+
+	apt install -y $BPO_FLAG libbpf-dev cmake libclang-dev zstd || __die_msg "安装 honk 编译依赖失败"
+
+	# 装到全局路径：构建阶段以 runner 身份运行，需要能找到同一套工具链
+	export CARGO_HOME="/usr/local/cargo"
+	export RUSTUP_HOME="/usr/local/rustup"
+	export PATH="$CARGO_HOME/bin:$PATH"
+
+	if HONK_TMP_DIR="$(mktemp -d)"; then
+		pushd "$HONK_TMP_DIR" >/dev/null || __die_msg "进入临时目录失败"
+	else
+		__die_msg "创建临时目录失败"
+	fi
+
+	curl "${CURL_OPTS[@]}" -o "bpf-linker.tar.zst" \
+		"https://github.com/aya-rs/bpf-linker/releases/download/v$BPF_LINKER_VERSION/bpf-linker-x86_64-unknown-linux-musl.tar.zst" \
+		|| __die_msg "下载 bpf-linker 失败"
+	echo "$BPF_LINKER_SHA256  bpf-linker.tar.zst" | sha256sum -c - || __die_msg "bpf-linker 校验失败"
+	tar --zstd -xf "bpf-linker.tar.zst" -C "/usr/local/bin" || __die_msg "安装 bpf-linker 失败"
+	chmod 0755 "/usr/local/bin/bpf-linker"
+
+	curl "${CURL_OPTS[@]}" -o "zig.tar.xz" \
+		"https://ziglang.org/download/$ZIG_VERSION/zig-x86_64-linux-$ZIG_VERSION.tar.xz" \
+		|| __die_msg "下载 zig 失败"
+	echo "$ZIG_SHA256  zig.tar.xz" | sha256sum -c - || __die_msg "zig 校验失败"
+	tar -Jxf "zig.tar.xz" || __die_msg "解压 zig 失败"
+	cp -fp "zig-x86_64-linux-$ZIG_VERSION/zig" "/usr/local/bin/zig" || __die_msg "安装 zig 失败"
+	chmod 0755 "/usr/local/bin/zig"
+
+	if [ ! -x "$CARGO_HOME/bin/cargo" ]; then
+		# Free Disk Space 步骤可能清掉镜像自带的 rust，残留目录会让 rustup-init 拒绝安装
+		rm -rf "${CARGO_HOME:?}" "${RUSTUP_HOME:?}"
+		curl "${CURL_OPTS[@]}" -o "rustup-init.sh" "https://sh.rustup.rs" || __die_msg "下载 rustup 失败"
+		sh "rustup-init.sh" -y --profile minimal --default-toolchain none --no-modify-path \
+			|| __die_msg "安装 rustup 失败"
+	fi
+	"$CARGO_HOME/bin/rustup" toolchain install "$RUST_CHANNEL" --profile minimal \
+		|| __die_msg "安装 rust $RUST_CHANNEL 失败"
+	"$CARGO_HOME/bin/rustup" toolchain install "$EBPF_CHANNEL" --profile minimal --component rust-src,llvm-tools \
+		|| __die_msg "安装 rust $EBPF_CHANNEL 失败"
+	"$CARGO_HOME/bin/rustup" target add aarch64-unknown-linux-musl --toolchain "$RUST_CHANNEL" \
+		|| __die_msg "添加 aarch64-unknown-linux-musl target 失败"
+	"$CARGO_HOME/bin/rustup" default "$RUST_CHANNEL" >/dev/null || true
+
+	"$CARGO_HOME/bin/cargo" install --locked cargo-zigbuild || __die_msg "安装 cargo-zigbuild 失败"
+
+	popd >/dev/null || __die_msg "退出临时目录失败"
+	rm -rf "$HONK_TMP_DIR"
+
+	# 构建阶段要能写 registry/toolchain 缓存
+	chmod -R a+rwX "$CARGO_HOME" "$RUSTUP_HOME"
+	ln -svf "$CARGO_HOME/bin/cargo-zigbuild" "/usr/local/bin/cargo-zigbuild"
+
+	if [ -n "${GITHUB_ENV:-}" ]; then
+		{
+			echo "CARGO_HOME=$CARGO_HOME"
+			echo "RUSTUP_HOME=$RUSTUP_HOME"
+		} >>"$GITHUB_ENV"
+	fi
+	if [ -n "${GITHUB_PATH:-}" ]; then
+		echo "$CARGO_HOME/bin" >>"$GITHUB_PATH"
+	fi
+
+	__success_msg "honk toolchain ready (bpf-linker $BPF_LINKER_VERSION, zig $ZIG_VERSION)."
+}
 function main() {
 	check_system
 	check_network
 	update_apt_source
 	install_dependencies
+	install_honk_toolchain
 }
 
 main
