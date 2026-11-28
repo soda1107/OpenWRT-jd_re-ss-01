@@ -19,7 +19,9 @@ export PATH="$CARGO_HOME/bin:$PATH"
 CURL_OPTS=(-fsSL --retry 3 --retry-delay 5 --connect-timeout 15)
 
 echo "[INFO] Installing honk-core toolchain..."
-apt install -y libbpf-dev cmake libclang-dev zstd
+# file: build_honk_core.sh 用 file -b 校验产物是否为静态 ELF，无守卫
+# binutils: 提供 readelf，build_honk_core.sh 用它检查 eBPF 对象的 .BTF 段
+apt install -y libbpf-dev cmake libclang-dev zstd file binutils
 
 TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
@@ -35,7 +37,17 @@ curl "${CURL_OPTS[@]}" -o zig.tar.xz \
 	"https://ziglang.org/download/${ZIG_VERSION}/zig-x86_64-linux-${ZIG_VERSION}.tar.xz"
 echo "$ZIG_SHA256  zig.tar.xz" | sha256sum -c -
 tar -Jxf zig.tar.xz
-install -m 0755 "zig-x86_64-linux-${ZIG_VERSION}/zig" /usr/local/bin/zig
+# Zig 从可执行文件所在目录反推 lib/（含标准库与内置头文件），只拷二进制会报
+# "unable to find zig installation directory from executable path"；必须整目录安装后做软链。
+ZIG_PREFIX="/opt/zig-${ZIG_VERSION}"
+rm -rf "$ZIG_PREFIX"
+mv "zig-x86_64-linux-${ZIG_VERSION}" "$ZIG_PREFIX"
+ln -svf "$ZIG_PREFIX/zig" /usr/local/bin/zig
+# 冒烟测试：zig version 只证明二进制存在，zig cc 才能证明 lib/ 与目标工具链可用
+zig version
+printf 'int main(void) { return 0; }\n' > "$TMP_DIR/zig-smoke.c"
+zig cc -target aarch64-linux-musl -c "$TMP_DIR/zig-smoke.c" -o "$TMP_DIR/zig-smoke.o"
+echo "[INFO] zig cc cross-compile smoke test passed"
 
 if [ ! -x "$CARGO_HOME/bin/cargo" ]; then
 	# free-disk-space 可能清掉自带 rust，残留目录会让 rustup-init 拒绝安装
