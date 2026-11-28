@@ -44,7 +44,6 @@ else
   git reset --hard
   git pull
 fi
-#rm -rf feeds
 ./scripts/feeds update -a && ./scripts/feeds install -a
 
 cd package/
@@ -61,5 +60,3 @@ bash $GITHUB_WORKSPACE/Scripts/AssertConfig.sh
 
 # make download -j8
 # make -j$(nproc) || make V=s -j1
-
-# make download -j8 && (make -j$(nproc) || make V=s -j1)

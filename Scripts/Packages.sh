@@ -125,7 +125,6 @@ UPDATE_PACKAGE "timecontrol" "sirpdboy/luci-app-timecontrol" "main"
 UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "axonhub gecoosac sing-box luci-app-homeproxy luci-app-timewol luci-app-wolplus luci-app-wolultra"
 #上游已删库/私有，启用前先确认
 #UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
-UPDATE_PACKAGE "luci-app-daed" "QiuSimons/luci-app-daed" "kix"
 UPDATE_PACKAGE "luci-app-daeuniverse" "QiuSimons/luci-app-daeuniverse" "master"
 
 #更新软件包版本
@@ -182,11 +181,6 @@ rm -rf ./feeds/packages/v2ray-geodata
 rm -rf ./v2ray-geodata
 cp -r "$WORKSPACE/package/v2ray-geodata" ./
 
-
-#修复daed/Makefile
-#rm -rf luci-app-daed/daed/Makefile && cp -r $GITHUB_WORKSPACE/patches/daed/Makefile luci-app-daed/daed/
-#sed -i 's/pnpm install ; \\/pnpm install --no-frozen-lockfile ; \\/g' luci-app-daed/daed/Makefile
-#sed -i 's|/run/i\\  procd_set_param|/procd_set_param command/i \\\tprocd_set_param|g' luci-app-daed/luci-app-daed/root/etc/init.d/luci_daed
 
 #引入私有扩展脚本，文件不存在时自动跳过
 if [ -f "$WORKSPACE/Scripts/PRIVATE.sh" ]; then

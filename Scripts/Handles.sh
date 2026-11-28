@@ -48,10 +48,6 @@ if [ -f "$TS_FILE" ]; then
 	fi
 fi
 
-#修复Rust编译失败
-FIX "rust" "$FEEDS_PATH/packages/lang/rust" sed -i 's/ci-llvm=true/ci-llvm=false/g' \
-	"$FEEDS_PATH/packages/lang/rust/Makefile"
-
 #修复miniupnpd的失效补丁
 MINIUPNPD_DIR="$FEEDS_PATH/packages/net/miniupnpd"
 MINIUPNPD_MK="$MINIUPNPD_DIR/Makefile"
