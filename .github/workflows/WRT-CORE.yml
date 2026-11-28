@@ -156,7 +156,10 @@ jobs:
           #剔除国内镜像源，避免个别镜像异常时拖慢 downloads
           PROJECT_MIRRORS_FILE="./wrt/scripts/projectsmirrors.json"
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
-            sed -i '/\.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
+            # 按条目删除，避免 JSON 尾逗号
+            jq -e --tab 'del(.[][] | select(test("[.]cn/|tencent|aliyun")))' \
+              "$PROJECT_MIRRORS_FILE" > "$PROJECT_MIRRORS_FILE.tmp"
+            mv -- "$PROJECT_MIRRORS_FILE.tmp" "$PROJECT_MIRRORS_FILE"
           fi
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
