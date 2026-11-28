@@ -4,5 +4,4 @@ CONFIG_TARGET_qualcommax_ipq60xx=y
 # 在源码行为变化时自动勾选全量编译（GENERAL.txt 全局 MULTI_PROFILE=y，故符号带 DEVICE_ 前缀）
 # CONFIG_TARGET_DEVICE_qualcommax_ipq60xx_Default is not set
 
-#设备列表
 CONFIG_TARGET_DEVICE_qualcommax_ipq60xx_DEVICE_jdcloud_re-ss-01=y

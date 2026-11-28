@@ -60,7 +60,14 @@ rustup toolchain install "$EBPF_CHANNEL" --profile minimal --component rust-src,
 rustup target add aarch64-unknown-linux-musl --toolchain "$RUST_CHANNEL"
 rustup default "$RUST_CHANNEL" >/dev/null
 
-cargo install --locked cargo-zigbuild
+for attempt in 1 2 3; do
+	if cargo install --locked cargo-zigbuild; then
+		break
+	fi
+	[ "$attempt" -eq 3 ] && { echo "[ERROR] cargo install cargo-zigbuild 连续 3 次失败" >&2; exit 1; }
+	echo "[WARN] cargo install 第 $attempt 次失败，10 秒后重试" >&2
+	sleep 10
+done
 
 # 编译阶段要能写缓存
 chmod -R a+rwX "$CARGO_HOME" "$RUSTUP_HOME"

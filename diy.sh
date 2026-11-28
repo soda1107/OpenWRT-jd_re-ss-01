@@ -1,16 +1,13 @@
 #!/bin/bash
-# 本地编译入口（对应 QCA-6.18 流水线）；用法：./diy.sh [Config] [源码仓库]
 # 编译前需先 sudo Scripts/InitHonkToolchain.sh 装 honk 交叉编译工具链
 
 WRT_REPO='https://github.com/VIKINGYFY/immortalwrt'
 WRT_BRANCH='main'
 
 if [ -n "$1" ]; then
-    # 如果有传递参数，赋值给WRT_TARGET
     filename=$(basename "$1")
     export WRT_CONFIG="${filename%.*}"
 else
-    # 如果没有传递参数，设置默认值
     export WRT_CONFIG="IPQ60XX-NOWIFI"
 fi
 

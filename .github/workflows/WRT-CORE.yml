@@ -1,4 +1,3 @@
-#云编译公用核心
 name: WRT-CORE
 
 on:
@@ -107,7 +106,7 @@ jobs:
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
           sudo -E apt -yqq install dos2unix libfuse-dev sparse
-          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+          sudo bash -c 'set -o pipefail; curl -fsSL --retry 3 --retry-delay 5 https://build-scripts.immortalwrt.org/init_build_environment.sh | bash'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
           # 上游脚本无 set -e，缺件不会失败，显式校验
@@ -119,8 +118,17 @@ jobs:
           fi
 
       - name: Install Honk Toolchain
+        if: env.WRT_TEST != 'true'
         run: |
-          sudo -E bash "$GITHUB_WORKSPACE/Scripts/InitHonkToolchain.sh"
+          # HOME=/root：避免 root 安装过程在 runner 家目录留下 root 属主文件
+          # （sudo -E 会保留 HOME=/home/runner，导致后续 cargo zigbuild Permission denied）
+          sudo -E env HOME=/root bash "$GITHUB_WORKSPACE/Scripts/InitHonkToolchain.sh"
+          # 兜底：恢复 runner 家目录属主（可能有前序步骤以 root 写过）
+          sudo chown -R "$(id -u):$(id -g)" "$HOME/.cache" 2>/dev/null || true
+          # 冒烟校验：文件存在不等于可用，提前拦截工具链安装缺陷
+          for tool in cargo rustc bpf-linker zig cargo-zigbuild; do
+            command -v "$tool" >/dev/null || { echo "::error::honk 工具链缺少 $tool"; exit 1; }
+          done
           {
             echo "CARGO_HOME=/usr/local/cargo"
             echo "RUSTUP_HOME=/usr/local/rustup"
@@ -140,26 +148,37 @@ jobs:
           echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
           echo "WRT_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
           echo "WRT_INFO=${WRT_SOURCE%%/*}" >> $GITHUB_ENV
-          echo "WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG.txt)" >> $GITHUB_ENV
+          # 空值守卫：解析失败会让缓存 key 退化、文件筛选匹配全部，必须早失败
+          WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG.txt)
+          [ -n "$WRT_TARGET" ] || { echo "::error::无法从 Config/$WRT_CONFIG.txt 解析 WRT_TARGET"; exit 1; }
+          echo "WRT_TARGET=$WRT_TARGET" >> $GITHUB_ENV
           echo "WRT_KVER=none" >> $GITHUB_ENV
           echo "WRT_LIST=none" >> $GITHUB_ENV
 
-          [[ -z $WRT_ARCH ]] && {
+          [[ -z ${WRT_ARCH:-} ]] && {
             export WRT_ARCH=$(sed -n 's/.*_DEVICE_\(.*\)_DEVICE_.*/\1/p' $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt | head -n 1)
             echo "WRT_ARCH=$WRT_ARCH" >> $GITHUB_ENV
           }
+          [ -n "${WRT_ARCH:-}" ] || { echo "::error::WRT_ARCH 为空，无法定位设备"; exit 1; }
           echo "$WRT_REPO/$WRT_BRANCH" > "$GITHUB_WORKSPACE/repo_flag"
       - name: Clone Code
         run: |
+          # 幂等守卫：支持 act 本地复现 / workspace 复用时重跑
+          rm -rf ./wrt
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
 
           #剔除国内镜像源，避免个别镜像异常时拖慢 downloads
           PROJECT_MIRRORS_FILE="./wrt/scripts/projectsmirrors.json"
           if [ -f "$PROJECT_MIRRORS_FILE" ]; then
-            # 按条目删除，避免 JSON 尾逗号
-            jq -e --tab 'del(.[][] | select(test("[.]cn/|tencent|aliyun")))' \
-              "$PROJECT_MIRRORS_FILE" > "$PROJECT_MIRRORS_FILE.tmp"
-            mv -- "$PROJECT_MIRRORS_FILE.tmp" "$PROJECT_MIRRORS_FILE"
+            # 按条目删除，避免 JSON 尾逗号；jq 失败时保留原文件，不用空 tmp 覆盖
+            if jq -e --tab 'del(.[][] | select(test("[.]cn/|tencent|aliyun")))' \
+              "$PROJECT_MIRRORS_FILE" > "$PROJECT_MIRRORS_FILE.tmp"; then
+              mv -- "$PROJECT_MIRRORS_FILE.tmp" "$PROJECT_MIRRORS_FILE"
+            else
+              echo "::error::jq 过滤 projectsmirrors.json 失败，保留原文件"
+              rm -f "$PROJECT_MIRRORS_FILE.tmp"
+              exit 1
+            fi
           fi
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
@@ -196,6 +215,7 @@ jobs:
 
       - name: Cache Wrt Build - 下载缓存（dl，与 commit 无关）
         id: cache-dl
+        if: env.WRT_TEST != 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -206,6 +226,7 @@ jobs:
 
       - name: Cache Wrt Build - 编译器缓存（ccache，滚动 key）
         id: cache-ccache
+        if: env.WRT_TEST != 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -216,6 +237,7 @@ jobs:
 
       - name: Cache Wrt Build - 工具链（host/toolchain，随源码 commit 变）
         id: cache-toolchain
+        if: env.WRT_TEST != 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -227,6 +249,7 @@ jobs:
 
       - name: Cache Wrt Build - 目标包（staging/target，随配置变）
         id: cache-target
+        if: env.WRT_TEST != 'true'
         uses: actions/cache@v4
         with:
           path: |
@@ -235,15 +258,25 @@ jobs:
           restore-keys: |
             ${{ env.WRT_ARCH }}-${{ env.WRT_TARGET }}-${{ env.WRT_BRANCH }}-${{ env.WRT_CONFIG }}-
 
-      - name: Refresh 工具链 stamp（仅 host/toolchain，排除 target-*，让恢复的工具链被直接复用）
+      - name: Refresh 工具链 stamp（来源 commit 一致才刷新，否则让 make 自行重建）
+        if: env.WRT_TEST != 'true'
         run: |
-          if [ -d "./wrt/staging_dir" ]; then
+          MARKER="./wrt/staging_dir/host/.toolchain-commit"
+          CACHED=$(cat "$MARKER" 2>/dev/null || echo "none")
+          echo "工具链缓存来源 commit: $CACHED / 当前: ${WRT_HASH:-none}"
+          if [ "$CACHED" = "$WRT_HASH" ] && [ -n "$WRT_HASH" ]; then
+            echo "来源一致，刷新 stamp 直接复用工具链"
             find "./wrt/staging_dir" -mindepth 1 -maxdepth 1 -type d ! -name "target-*" | while read -r dir; do
                 find "$dir" -type d -name "stamp" | while read -r s; do
                     find "$s" -type f -exec touch {} +
                 done
             done
+          else
+            echo "来源不一致或首次构建，不刷新 stamp，由 make 判断是否需要重建工具链"
           fi
+          # 写入当前 commit，供本次构建结束时 action 保存进缓存
+          mkdir -p "./wrt/staging_dir/host"
+          echo "$WRT_HASH" > "$MARKER"
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
@@ -276,21 +309,35 @@ jobs:
           fi
 
           #失败包的错误不在控制台，先打包级日志，没有日志再串行重编一次
-          FAILED=$(sed -n 's/.*ERROR: \(package\/[^ ]*\) failed to build.*/\1/p' ../build.log | head -1 || true)
-          echo "failed package: ${FAILED:-<unknown>}"
+          #只提取可靠的 package/... failed 格式（可作为 make target），全部列出
+          FAILED=$(sed -n -E 's#.*ERROR: (package/[^ ]+) failed to build.*#\1#p' ../build.log | sort -u | head -20 || true)
+          echo "failed package(s): ${FAILED:-<unknown>}"
           if [ -n "${FAILED:-}" ]; then
-            LOGS=$(find "logs/$FAILED" -name '*.txt' 2>/dev/null || true)
-            if [ -n "$LOGS" ]; then
-              for f in $LOGS; do
-                echo "::group::$f"
-                tail -n 80 "$f"
+            for pkg in $FAILED; do
+              LOGS=$(find "logs/$pkg" -name '*.txt' 2>/dev/null || true)
+              if [ -n "$LOGS" ]; then
+                for f in $LOGS; do
+                  echo "::group::$f"
+                  tail -n 80 "$f"
+                  echo "::endgroup::"
+                done
+              else
+                echo "::group::$pkg 串行重编"
+                make -j1 V=s "$pkg/compile" 2>&1 | tail -n 150 || true
                 echo "::endgroup::"
-              done
-            else
-              echo "::group::$FAILED 串行重编"
-              make -j1 V=s "$FAILED/compile" 2>&1 | tail -n 150 || true
+              fi
+            done
+          else
+            #兜底：无法定位失败包时输出 build.log 尾部与所有编译日志
+            #（make[3]: *** [...] Error 1 这类失败走这里，诊断信息在日志中）
+            echo "::group::build.log 尾部（未能定位失败包）"
+            tail -n 200 ../build.log || true
+            echo "::endgroup::"
+            for f in $(find logs -name 'compile.txt' -type f 2>/dev/null); do
+              echo "::group::$f"
+              tail -n 60 "$f"
               echo "::endgroup::"
-            fi
+            done
           fi
           exit 1
 

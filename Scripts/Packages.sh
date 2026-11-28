@@ -25,7 +25,6 @@ is_required() {
 
 : >"$LOCK_FILE"
 
-#安装和更新软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
 	local PKG_REPO=$2
@@ -36,13 +35,10 @@ UPDATE_PACKAGE() {
 
 	echo " "
 
-	# 删除本地可能存在的不同名称的软件包
 	for NAME in "${PKG_LIST[@]}"; do
-		# 查找匹配的目录
 		echo "Search directory: $NAME"
 		local FOUND_DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null || true)
 
-		# 删除找到的目录
 		if [ -n "$FOUND_DIRS" ]; then
 			while read -r DIR; do
 				[ -n "$DIR" ] || continue
@@ -79,7 +75,6 @@ UPDATE_PACKAGE() {
 	CLONE_OK=$((CLONE_OK + 1))
 	echo "$PKG_NAME $PKG_REPO $PKG_BRANCH $(git -C "$REPO_NAME" rev-parse --short HEAD 2>/dev/null || echo unknown)" >>"$LOCK_FILE"
 
-	# 处理克隆的仓库
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
 		find ./$REPO_NAME/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \; || true
 		rm -rf ./$REPO_NAME/
@@ -88,11 +83,8 @@ UPDATE_PACKAGE() {
 	fi
 }
 
-# 调用示例
-# UPDATE_PACKAGE "OpenAppFilter" "destan19/OpenAppFilter" "master" "" "custom_name1 custom_name2"
-# UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf" 这样会把原有的open-app-filter，luci-app-appfilter，oaf相关组件删除，不会出现coremark错误。
-
-# UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选，pkg为从大杂烩中单独提取包名插件；name为重命名为包名"
+# UPDATE_PACKAGE "open-app-filter" ... 第5参数删除 feeds 中同名旧包，避免 coremark 重复定义错误
+# 第4参数：pkg=从仓库提取单个插件目录，name=克隆后重命名为包名
 UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
 UPDATE_PACKAGE "kucat" "sirpdboy/luci-theme-kucat" "master"
 UPDATE_PACKAGE "kucat-config" "sirpdboy/luci-app-kucat-config" "master"
@@ -127,7 +119,6 @@ UPDATE_PACKAGE "viking" "VIKINGYFY/packages" "main" "" "axonhub gecoosac sing-bo
 #UPDATE_PACKAGE "vnt" "lmq8267/luci-app-vnt" "main"
 UPDATE_PACKAGE "luci-app-daeuniverse" "QiuSimons/luci-app-daeuniverse" "master"
 
-#更新软件包版本
 UPDATE_VERSION() {
 	local PKG_NAME=$1
 	local PKG_MARK=${2:-false}
@@ -171,9 +162,8 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "软件包名" "测试版，true，可选，默认为否"
 #UPDATE_VERSION "sing-box"
 
-#删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,bypass*}
-# 同步清掉 feeds 里的软链
+# feeds 目录在 package/ 下是软链，需同步清理
 rm -f ./feeds/luci/luci-app-{passwall*,mosdns,dockerman,bypass*}
 rm -rf ../feeds/packages/net/v2ray-geodata
 rm -rf ./feeds/packages/net/v2ray-geodata
@@ -182,7 +172,6 @@ rm -rf ./v2ray-geodata
 cp -r "$WORKSPACE/package/v2ray-geodata" ./
 
 
-#引入私有扩展脚本，文件不存在时自动跳过
 if [ -f "$WORKSPACE/Scripts/PRIVATE.sh" ]; then
 	echo " "
 	echo "Applying private packages from PRIVATE.sh..."

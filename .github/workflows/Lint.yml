@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: MIT
-# 只覆盖 6.18 流水线相关文件
 name: Lint
 
 on:
@@ -23,7 +22,6 @@ jobs:
           sudo -E apt-get update -qq
           sudo -E apt-get install -y -qq shellcheck
           shellcheck --version
-          # 只报 error 级别
           shellcheck -S error -x -s bash diy.sh Scripts/*.sh
 
   actionlint:

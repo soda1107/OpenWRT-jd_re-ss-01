@@ -37,8 +37,6 @@ EOF
 }
 
 function cat_ebpf_config() {
-
-#ebpf相关
   cat >> $1 <<EOF
 #eBPF
 CONFIG_DEVEL=y
@@ -79,24 +77,21 @@ EOF
 }
 function remove_wifi() {
   local target=$1
-  #去除依赖
   local wifi_pkg_pattern='wpad-[^ ]*|hostapd-[^ ]*|kmod-ath|kmod-ath10k|kmod-ath10k-[^ ]*|kmod-ath11k|kmod-ath11k-[^ ]*|kmod-mac80211|kmod-cfg80211|ath10k-firmware-[^ ]*|ath11k-firmware-[^ ]*|ipq-wifi-[^ ]*'
   sed -i -E ":again; s/(^|[[:space:]])-?(${wifi_pkg_pattern})([[:space:]]|$)/ /g; t again; s/[[:space:]]+$//" ./target/linux/qualcommax/Makefile
   sed -i -E ":again; s/(^|[[:space:]])-?(${wifi_pkg_pattern})([[:space:]]|$)/ /g; t again; s/[[:space:]]+$//" ./target/linux/qualcommax/${target}/target.mk
   sed -i -E ":again; s/(^|[[:space:]])-?(${wifi_pkg_pattern})([[:space:]]|$)/ /g; t again; s/[[:space:]]+$//" ./target/linux/qualcommax/image/${target}.mk
   sed -i 's/\bkmod-qca-nss-drv-wifi-meshmgr\b//g' ./target/linux/qualcommax/Makefile
-  #删除无线组件
   rm -rf package/network/services/hostapd
   rm -rf package/firmware/ipq-wifi
 }
 
 function set_kernel_size() {
-  #jdcloud_re-ss-01 内核 12M
+  # jdcloud_re-ss-01 分区表内核区为 12M
   image_file='./target/linux/qualcommax/image/ipq60xx.mk'
   sed -i "/^define Device\/emmc-common/,/^endef/ s/KERNEL_SIZE := 6144k/KERNEL_SIZE := 12288k/" $image_file
   sed -i "/^define Device\/jdcloud_re-ss-01/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
 }
-#开启内存回收补丁
 function enable_skb_recycler() {
   cat >> $1 <<EOF
 CONFIG_KERNEL_SKB_RECYCLER=y
@@ -106,22 +101,18 @@ EOF
 
 function generate_config() {
   config_file=".config"
-  #如配置文件已存在
   cat $GITHUB_WORKSPACE/Config/${WRT_CONFIG}.txt > $config_file
   cat $GITHUB_WORKSPACE/Config/GENERAL.txt >> $config_file
 
   local target=$(echo $WRT_ARCH | cut -d'_' -f2)
 
-  #删除wifi依赖
   if [[ "$WRT_CONFIG" == *"NOWIFI"* ]]; then
     remove_wifi $target
   fi
 
   set_nss_driver $config_file
-  #增加ebpf
   cat_ebpf_config $config_file
   enable_skb_recycler $config_file
   set_kernel_size
-  #增加内核选项
   cat_kernel_config "target/linux/qualcommax/${target}/config-default"
 }

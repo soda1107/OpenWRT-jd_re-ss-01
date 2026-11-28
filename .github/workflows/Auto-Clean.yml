@@ -1,10 +1,8 @@
 name: Auto-Clean
 
 on:
-  #自动清理：每月 1 号 20:00 UTC（北京时间 2 号 04:00）
   schedule:
     - cron: 0 20 1 * *
-  #手动清理
   workflow_dispatch:
     inputs:
       NUMBER:
@@ -26,8 +24,7 @@ jobs:
         with:
           gh_token: ${{secrets.GITHUB_TOKEN}}
           delete_releases: true
-          #保留最近 2 个
-          releases_keep_latest: ${{inputs.NUMBER || '2'}}
+          releases_keep_latest: ${{inputs.NUMBER || '1'}}
           delete_tags: true
           delete_workflows: true
           workflows_keep_day: 0

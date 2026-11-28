@@ -2,17 +2,12 @@
 # SPDX-License-Identifier: MIT
 # Copyright (C) 2026 VIKINGYFY
 
-#本脚本由 CI 以 cwd=./wrt/package/ 调用，diy.sh 亦同；
-#这里沿用上游的绝对路径写法，避免调用点变化后所有修补被守卫静默跳过。
-PKG_PATH="${GITHUB_WORKSPACE:+$GITHUB_WORKSPACE/wrt/package}"
+# CI 与 diy.sh 均以 cwd=./wrt/package/ 调用；用绝对路径避免 cwd 变化后修补被守卫静默跳过
 [ -d "$PKG_PATH" ] || PKG_PATH="$(pwd)"
 PACKAGE_PATH="$PKG_PATH"
-#注意：wrt/package/feeds 是指向 wrt/feeds 的符号链接，而 find 默认(-P)不跟随符号链接，
-#必须用 ../feeds 这个真实路径，否则 tailscale 的 find 永远找不到文件。
 FEEDS_PATH="$PKG_PATH/../feeds"
 
-#修补命令统一入口：FIX <名称> <守卫目录> <命令...>
-#守卫目录不存在时直接跳过，保证在 bash -e 下不中断
+
 FIX() {
 	local NAME=$1
 	local GUARD=$2
@@ -28,12 +23,10 @@ FIX() {
 	fi
 }
 
-#修改argon主题字体和颜色
 FIX "theme-argon" "$PACKAGE_PATH/luci-theme-argon" sed -i \
 	"s/primary '.*'/primary '#31a1a1'/g; s/'0.2'/'0.5'/g; s/'none'/'bing'/g; s/'600'/'normal'/g" \
 	"$PACKAGE_PATH/luci-theme-argon/luci-app-argon-config/root/etc/config/argon"
 
-#修改mini-diskmanager菜单位置
 FIX "mini-diskmanager" "$PACKAGE_PATH/luci-app-mini-diskmanager" sed -i "s/services/system/g" \
 	"$PACKAGE_PATH/luci-app-mini-diskmanager/luci-app-mini-diskmanager/root/usr/share/luci/menu.d/luci-app-mini-diskmanager.json"
 
@@ -51,12 +44,6 @@ fi
 #修复miniupnpd的失效补丁
 MINIUPNPD_DIR="$FEEDS_PATH/packages/net/miniupnpd"
 MINIUPNPD_MK="$MINIUPNPD_DIR/Makefile"
-#已知坏快照：immortalwrt/packages 2026-10-16 的 "Merge Official Source" 把 miniupnpd 2.3.11
-#合了进来，却把 openwrt 早已删掉的旧补丁又带了回来。这些补丁对应的代码 2.3.11 已经自带
-#（已核对 upnppermissions.c 里 iseol / get_sep / get_addr 与 const char * 签名全在），
-#重打必然 Hunk FAILED，整个 world 编译直接中断。openwrt/packages 在 2.3.11 上已不带任何
-#补丁，这里对齐它的状态。
-#用补丁指纹做守卫：上游一旦真正修好（补丁内容变了），指纹对不上就自动跳过，不会误删。
 MINIUPNPD_BAD_020_SHA="4e0f8ddf58cb130044a5f3b92bdf3a8859f8c15e0edbcbcb2b8df42f99e41da1"
 if [ -f "$MINIUPNPD_MK" ] && [ -f "$MINIUPNPD_DIR/patches/020-descr-filter-fix.patch" ]; then
 	echo " "
